@@ -1,0 +1,10 @@
+
+#progressBar {
+    -fx-border-color: #81b29a; /* Soft Green Border */
+    -fx-border-width: 2px;
+
+}
+
+#progressBar .bar {
+    -fx-background-radius: 5px;
+}

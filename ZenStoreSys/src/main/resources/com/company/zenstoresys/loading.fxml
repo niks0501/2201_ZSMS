@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.palexdev.materialfx.controls.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.text.*?>
+
+<AnchorPane prefHeight="300.0" prefWidth="550.0" style="-fx-background-color: f5ebe0;" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.LoadingController">
+   <children>
+      <Line endX="67.0" layoutX="90.0" layoutY="53.0" startX="-100.0" stroke="#81b29a" strokeWidth="20.0" />
+      <ImageView fitHeight="238.0" fitWidth="351.0" layoutX="109.0" layoutY="14.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@../../../img/main_logo.png" />
+         </image>
+      </ImageView>
+      <Line endX="44.0" layoutX="514.0" layoutY="53.0" startX="-101.0" stroke="#81b29a" strokeWidth="20.0" />
+      <MFXProgressBar fx:id="progressBar" layoutX="13.0" layoutY="252.0" prefHeight="26.0" prefWidth="542.0">
+         <effect>
+            <Reflection fraction="0.74" />
+         </effect>
+      </MFXProgressBar>
+      <Label fx:id="loadingLbl" layoutX="251.0" layoutY="228.0" text="Loading..." textAlignment="CENTER" textFill="#147d58">
+         <font>
+            <Font name="Inter 18pt Bold" size="14.0" />
+         </font>
+      </Label>
+      <MFXButton fx:id="btnExit" buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" depthLevel="LEVEL0" graphicTextGap="5.0" layoutX="540.0" layoutY="2.0" onAction="#onExit" prefHeight="9.0" prefWidth="17.0" rippleAnimateBackground="false" rippleAnimationSpeed="0.0" rippleBackgroundOpacity="0.0" rippleRadius="0.0" rippleRadiusMultiplier="0.0" style="-fx-background-color: transparent;" textAlignment="CENTER">
+         <graphic>
+            <Circle fill="#ff2200" radius="6.0" stroke="#6e303000" strokeLineJoin="ROUND" strokeType="INSIDE" />
+         </graphic>
+      </MFXButton>
+   </children>
+</AnchorPane>

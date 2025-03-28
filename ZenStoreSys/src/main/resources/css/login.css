@@ -1,0 +1,11 @@
+#contentPane {
+    -fx-background-color: #ffffff;  /* White background */
+    -fx-background-radius: 20px;    /* Rounded corners */
+    -fx-border-radius: 20px;        /* Ensures border follows rounded shape */
+    -fx-border-color: #dddddd;      /* Soft border color */
+    -fx-border-width: 1px;          /* Thin border for definition */
+    -fx-padding: 15px;              /* Space inside the pane */
+
+    /* Shadow Effect */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.2, 0.1, 0);
+}
