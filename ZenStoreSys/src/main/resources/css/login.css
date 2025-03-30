@@ -1,11 +1,77 @@
+/* login.css */
 #contentPane {
-    -fx-background-color: #ffffff;  /* White background */
-    -fx-background-radius: 20px;    /* Rounded corners */
-    -fx-border-radius: 20px;        /* Ensures border follows rounded shape */
-    -fx-border-color: #dddddd;      /* Soft border color */
-    -fx-border-width: 1px;          /* Thin border for definition */
-    -fx-padding: 15px;              /* Space inside the pane */
-
-    /* Shadow Effect */
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 20px;
+    -fx-border-radius: 20px;
+    -fx-border-color: #dddddd;
+    -fx-border-width: 1px;
+    -fx-padding: 15px;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.2, 0.1, 0);
 }
+
+#usernameFld .floating-text {
+    -fx-text-fill: -mfx-charcoal; /* Text color */
+    -fx-font-size: 16px;
+    -fx-font-family: "Open Sans";
+    -fx-font-weight: bold;
+}
+
+#usernameFld {
+    -fx-border-radius: 8px;         /* Rounded edges */
+    -fx-background-radius: 8px;     /* Ensures smooth rounding */
+    -fx-border-color: green;      /* Slightly darker green border */
+    -fx-border-width: 2px;
+}
+
+#passwordFld {
+    -fx-border-radius: 8px;         /* Rounded edges */
+    -fx-background-radius: 8px;     /* Ensures smooth rounding */
+    -fx-border-color: green;      /* Slightly darker green border */
+    -fx-border-width: 2px;
+}
+
+#passwordFld .floating-text {
+    -fx-text-fill: -mfx-charcoal; /* Text color */
+    -fx-font-size: 16px;
+    -fx-font-family: "Open Sans";
+    -fx-font-weight: bold;
+}
+
+/* #F5EBE0 */
+/*  #81B29A */
+
+/* Default button style */
+#btnLogin {
+    -fx-background-color: #81B29A;
+    -fx-border-color: #F5EBE0;
+    -fx-border-width: 2px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10px 20px;
+    -fx-cursor: hand;
+    -fx-transition: all 0.2s ease-in-out;
+}
+
+/* Hover effect: Slight scale up */
+#btnLogin:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+/* Pressed effect: Slight shrink */
+#btnLogin:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+
+
+
+
+
+
+
+
+
