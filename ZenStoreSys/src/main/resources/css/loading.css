@@ -8,3 +8,10 @@
 #progressBar .bar {
     -fx-background-radius: 5px;
 }
+
+#loadingPane { /* Assuming your root pane has fx:id="mainPane" */
+    -fx-background-radius: 20; /* Adjust for roundness */
+    -fx-border-radius: 25;
+    -fx-background-color: transparent; /* Semi-transparent white */
+
+}

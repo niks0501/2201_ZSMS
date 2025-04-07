@@ -1,0 +1,9 @@
+#navigationPane {
+    -fx-background-color: rgba(129, 178, 154, 0.8); /* Semi-transparent #81B29A */
+    -fx-background-radius: 0; /* Rounded corners */
+    -fx-border-color: white; /* No border */
+    -fx-border-radius: 0;
+    -fx-border-width: 1.5px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 15, 0.1, 0, 5),
+                innershadow(gaussian, rgba(255, 255, 255, 0.3), 10, 0.3, 0, 0);
+}

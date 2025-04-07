@@ -1,0 +1,160 @@
+/* #F5EBE0 */
+/*  #81B29A */
+
+#prodContentPane {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 20px;
+    -fx-border-radius: 20px;
+    -fx-border-color: #dddddd;
+    -fx-border-width: 1px;
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.2, 0.1, 0);
+}
+
+#searchFld {
+    -fx-border-radius: 8px;         /* Rounded edges */
+    -fx-background-radius: 8px;     /* Ensures smooth rounding */
+    -fx-border-color: green;      /* Slightly darker green border */
+    -fx-border-width: 2px;
+}
+
+#searchFld .floating-text {
+    -fx-text-fill: -mfx-charcoal; /* Text color */
+    -fx-font-size: 16px;
+    -fx-font-family: "Open Sans";
+    -fx-font-weight: bold;
+}
+
+#sortTbl {
+    -fx-border-radius: 8px;         /* Rounded edges */
+    -fx-background-radius: 8px;     /* Ensures smooth rounding */
+    -fx-border-color: green;      /* Slightly darker green border */
+    -fx-border-width: 2px;
+}
+
+#sortTbl .floating-text {
+    -fx-text-fill: -mfx-charcoal; /* Text color */
+    -fx-font-size: 13px;
+    -fx-font-family: "Open Sans";
+    -fx-font-weight: bold;
+}
+
+.mfx-combo-box:focus-within .caret .mfx-font-icon {
+  -mfx-color: #81b29a;
+}
+
+.mfx-combo-box-cell {
+  -mfx-main: -mfx-purple;
+  -mfx-hover: rgba(98, 0, 238, 0.1);
+  -mfx-selected: rgba(98, 0, 238, 0.2);
+  -fx-background-color: transparent;
+  -fx-background-radius: 5;
+  -fx-padding: 5;
+}
+
+.mfx-combo-box-cell:hover {
+  -fx-background-color: -mfx-hover;
+}
+
+.mfx-combo-box-cell:selected {
+  -fx-background-color: -mfx-selected;
+}
+
+.mfx-combo-box-cell .data-label {
+  -fx-font-family: "Open Sans Regular";
+  -fx-text-fill: -mfx-text-he;
+}
+
+.mfx-combo-box:disabled .caret .mfx-font-icon {
+  -mfx-color: -mfx-charcoal;
+}
+
+.mfx-pagination .mfx-page:selected {
+  -fx-background-color: #81b29a;
+  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 15, 0.16, 2, 4);
+  -fx-font-size: 14;
+  -fx-text-fill: white;
+  -fx-font-weight: bold;
+}
+
+.pages-popup .virtual-flow .mfx-list-cell:hover {
+  -fx-background-color: #F4EBFF;
+  -fx-background-radius: 5;
+}
+
+.mfx-pagination .mfx-icon-wrapper {
+  -fx-background-color: #f0f0f0;
+}
+
+#btnAddProduct:hover {
+    -fx-scale-x: 1.10;
+    -fx-scale-y: 1.10;
+}
+
+#btnAddProduct:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+#productTbl {
+    -fx-background-color: transparent;
+    -fx-border-color: #dddddd;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.1), 10, 0.2, 0, 4);
+}
+
+#productTbl .column-header {
+    -fx-background-color: #81b29a;
+    -fx-background-radius: 10 10 0 0;
+    -fx-border-radius: 10 10 0 0;
+    -fx-border-color: #cccccc;
+    -fx-border-width: 0 0 1 0;
+}
+
+#productTbl .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px;
+}
+
+#productTbl .column-header {
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER-LEFT;
+}
+
+#productTbl .table-row-cell {
+    -fx-background-color: white;
+    -fx-border-color: #eeeeee;
+    -fx-border-width: 0 0 1 0;
+    -fx-padding: 8px;
+}
+
+#productTbl .table-row-cell:filled:hover {
+    -fx-background-color: #f0f8ff;
+}
+
+#productTbl .table-row-cell:focused {
+    -fx-background-color: #e6f2ff;
+    -fx-border-color: #0078d7;
+}
+
+#productTbl .table-cell {
+    -fx-text-fill: #333333;
+    -fx-font-size: 12.5px;
+}
+
+#btnPopup:hover {
+    -fx-scale-x: 1.10;
+    -fx-scale-y: 1.10;
+}
+
+#btnPopup:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+
+
+

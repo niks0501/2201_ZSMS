@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.palexdev.materialfx.controls.MFXButton?>
+<?import io.github.palexdev.materialfx.controls.MFXComboBox?>
+<?import io.github.palexdev.materialfx.controls.MFXPagination?>
+<?import io.github.palexdev.materialfx.controls.MFXTextField?>
+<?import java.lang.String?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.shape.Line?>
+<?import javafx.scene.text.Font?>
+
+<StackPane id="prodMainFrame" fx:id="prodMainFrame" prefHeight="646.0" prefWidth="1080.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.ProductController">
+   <children>
+      <AnchorPane prefHeight="509.0" prefWidth="941.0" style="-fx-background-color: #F5EBE0;">
+         <children>
+            <Pane fx:id="prodContentPane" layoutX="20.0" layoutY="24.0" prefHeight="583.0" prefWidth="1039.0" style="-fx-background-color: white;">
+               <children>
+                  <Line endX="-100.0" endY="48.0" layoutX="114.0" layoutY="18.0" startX="-100.0" stroke="#81b29a" strokeWidth="10.0" />
+                  <Label layoutX="25.0" layoutY="13.0" prefHeight="44.0" prefWidth="203.0" text="ZSariSmart">
+                     <font>
+                        <Font name="Inter 18pt ExtraBold" size="35.0" />
+                     </font>
+                  </Label>
+                  <Label layoutX="25.0" layoutY="45.0" prefHeight="25.0" prefWidth="174.0" text="Products">
+                     <font>
+                        <Font name="Source Sans 3 SemiBold" size="16.0" />
+                     </font>
+                  </Label>
+                  <TableView id="productTbl" fx:id="productTbl" layoutX="19.0" layoutY="116.0" prefHeight="420.0" prefWidth="1002.0">
+                    <columns>
+                      <TableColumn id="productImgColumn" fx:id="productImgColumn" prefWidth="149.0" text="Product Image" />
+                      <TableColumn id="productNameColumn" fx:id="productNameColumn" prefWidth="162.0" text="Name" />
+                        <TableColumn id="categoryColumn" fx:id="categoryColumn" prefWidth="149.0" text="Category" />
+                        <TableColumn id="costPriceColumn" fx:id="costPriceColumn" prefWidth="85.0" text="Cost Price" />
+                        <TableColumn id="markupColumn" fx:id="markupColumn" prefWidth="88.0" text="Markup %" />
+                        <TableColumn id="stocksColumn" fx:id="stocksColumn" prefWidth="90.0" text="Stocks" />
+                        <TableColumn id="sellingPriceColumn" fx:id="sellingPriceColumn" prefWidth="94.0" text="Selling Price" />
+                        <TableColumn id="barcodeColumn" fx:id="barcodeColumn" prefWidth="184.0" text="Barcode" />
+                    </columns>
+                  </TableView>
+                  <MFXComboBox id="sortTbl" fx:id="sortTbl" floatMode="BORDER" floatingText="Sort" layoutX="899.0" layoutY="82.0" minHeight="0.0" minWidth="0.0" prefHeight="25.0" prefWidth="122.0" styleClass="mfx-combo-box" />
+                  <ImageView fitHeight="36.0" fitWidth="36.0" layoutX="310.0" layoutY="65.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../img/google.png" />
+                     </image>
+                  </ImageView>
+                  <MFXPagination id="productTblPage" fx:id="productTblPage" layoutX="311.0" layoutY="540.0" maxPage="8" minWidth="0.0" prefHeight="25.0" prefWidth="397.0" />
+                  <MFXButton id="btnAddProduct" fx:id="btnAddProduct" buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" depthLevel="LEVEL4" layoutX="19.0" layoutY="77.0" minHeight="0.0" minWidth="0.0" prefHeight="36.0" prefWidth="59.0" rippleAnimateBackground="false" rippleAnimationSpeed="0.0" rippleBackgroundOpacity="0.0" rippleColor="#81b29a" rippleRadius="0.0" rippleRadiusMultiplier="0.0" style="-fx-background-color: transparent;">
+                     <graphic>
+                        <ImageView fitHeight="31.0" fitWidth="38.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../img/add-package.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </MFXButton>
+                  <ImageView fitHeight="25.0" fitWidth="23.0" layoutX="876.0" layoutY="83.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../img/filter%20(1).png" />
+                     </image>
+                  </ImageView>
+                  <MFXTextField id="searchFld" fx:id="searchFld" floatMode="BORDER" floatingText="Search" graphicTextGap="5.0" layoutX="346.0" layoutY="75.0" minHeight="0.0" minWidth="0.0" prefHeight="32.0" prefWidth="328.0">
+                     <font>
+                        <Font name="Open Sans Regular" size="14.0" />
+                     </font>
+                  </MFXTextField>
+               </children>
+            </Pane>
+            <Button id="btnPopup" fx:id="btnPopup" contentDisplay="GRAPHIC_ONLY" layoutX="494.0" layoutY="615.0" mnemonicParsing="false" prefHeight="34.0" prefWidth="92.0" style="-fx-background-color: #81b29a;" text="Button">
+               <graphic>
+                  <ImageView fitHeight="26.0" fitWidth="57.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../img/up-arrow.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <styleClass>
+                  <String fx:value="mfx-combo-box" />
+                  <String fx:value="mfx-combo-box-cell" />
+               </styleClass>
+            </Button>
+         </children></AnchorPane>
+   </children>
+</StackPane>

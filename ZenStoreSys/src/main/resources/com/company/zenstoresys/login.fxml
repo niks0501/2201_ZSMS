@@ -15,13 +15,13 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<StackPane alignment="TOP_LEFT" prefHeight="550.0" prefWidth="450.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.LoginController">
+<StackPane id="loginPane" fx:id="loginPane" alignment="TOP_LEFT" prefHeight="550.0" prefWidth="450.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.LoginController">
    <children>
       <AnchorPane prefHeight="200.0" prefWidth="200.0" style="-fx-background-color: #F5EBE0;">
          <children>
             <VBox alignment="TOP_CENTER" prefHeight="34.0" prefWidth="450.0">
                <children>
-                  <Pane fx:id="barPane" prefHeight="43.0" prefWidth="450.0" style="-fx-background-color: #81B29A;">
+                  <Pane fx:id="barPane" prefHeight="43.0" prefWidth="450.0" style="-fx-background-color: #262626;">
                      <children>
                         <Label layoutX="14.0" layoutY="2.0" text="Login" textAlignment="CENTER" textFill="WHITE">
                            <graphic>
@@ -35,12 +35,12 @@
                               <Font name="Inter 18pt Bold" size="15.0" />
                            </font>
                         </Label>
-                        <MFXButton fx:id="btnExit" buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" layoutX="422.0" layoutY="2.0" prefHeight="16.0" prefWidth="18.0" style="-fx-background-color: transparent;">
+                        <MFXButton fx:id="btnExit" contentDisplay="GRAPHIC_ONLY" layoutX="422.0" layoutY="2.0" prefHeight="16.0" prefWidth="18.0" rippleAnimateBackground="false" rippleAnimationSpeed="0.0" rippleBackgroundOpacity="0.0" rippleRadius="0.0" rippleRadiusMultiplier="0.0" style="-fx-background-color: transparent;">
                            <graphic>
                               <Circle fill="#ff1f1f" radius="6.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" />
                            </graphic>
                         </MFXButton>
-                        <MFXButton fx:id="btnMinimize" buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" layoutX="394.0" layoutY="2.0" prefHeight="16.0" prefWidth="18.0" style="-fx-background-color: transparent;">
+                        <MFXButton fx:id="btnMinimize" computeRadiusMultiplier="false" contentDisplay="GRAPHIC_ONLY" layoutX="394.0" layoutY="2.0" prefHeight="16.0" prefWidth="18.0" rippleAnimateBackground="false" rippleAnimationSpeed="0.0" rippleBackgroundOpacity="0.0" rippleColor="#a39595ec" rippleRadius="0.0" rippleRadiusMultiplier="0.0" style="-fx-background-color: transparent;">
                            <graphic>
                               <Circle fill="#1fff52" radius="6.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" />
                            </graphic>
@@ -59,12 +59,17 @@
                         <Image url="@../../../img/security.png" />
                      </image>
                   </ImageView>
-                  <MFXTextField fx:id="usernameFld" floatMode="BORDER" floatingText="Username" prefHeight="49.0" prefWidth="258.0">
+                  <Label fx:id="loginLbl" prefHeight="24.0" prefWidth="62.0" text="LOGIN">
+                     <font>
+                        <Font name="Inter 18pt ExtraBold" size="18.0" />
+                     </font>
+                  </Label>
+                  <MFXTextField id="username" fx:id="usernameFld" floatMode="BORDER" floatingText="Username" prefHeight="49.0" prefWidth="258.0">
                      <font>
                         <Font name="JetBrains Mono Regular" size="16.0" />
                      </font>
                      <VBox.margin>
-                        <Insets top="30.0" />
+                        <Insets top="50.0" />
                      </VBox.margin></MFXTextField>
                   <MFXPasswordField fx:id="passwordFld" floatMode="BORDER" floatingText="Password" minHeight="0.0" minWidth="0.0" prefHeight="49.0" prefWidth="256.0">
                      <VBox.margin>

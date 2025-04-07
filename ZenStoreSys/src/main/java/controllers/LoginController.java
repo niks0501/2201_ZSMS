@@ -1,6 +1,8 @@
 package controllers;
 
+import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
+import javafx.animation.ScaleTransition;
 import javafx.animation.Timeline;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -56,6 +58,10 @@ public class LoginController {
 
         btnExit.setOnAction(event -> handleExit());
         btnMinimize.setOnAction(event -> handleMinimize());
+        btnLogin.setOnAction(event -> {
+            animateButton(btnLogin);
+            handleLogin();
+        });
 
     }
 
@@ -77,6 +83,18 @@ public class LoginController {
         yOffset = event.getSceneY();
     }
 
+    private void animateButton(Button button) {
+        ScaleTransition st = new ScaleTransition(Duration.millis(200), button);
+        st.setFromX(1.0);
+        st.setFromY(1.0);
+        st.setToX(0.9);
+        st.setToY(0.9);
+        st.setCycleCount(2);
+        st.setAutoReverse(true);
+        st.setInterpolator(Interpolator.EASE_BOTH);
+        st.play();
+    }
+
     @FXML
     private void handleMouseDragged(MouseEvent event) {
         Stage stage = (Stage) barPane.getScene().getWindow();
@@ -87,6 +105,7 @@ public class LoginController {
     @FXML
     private void handleEnterKey(KeyEvent event) {
         if (event.getCode() == KeyCode.ENTER) {
+            animateButton(btnLogin);
             handleLogin();
         }
     }
