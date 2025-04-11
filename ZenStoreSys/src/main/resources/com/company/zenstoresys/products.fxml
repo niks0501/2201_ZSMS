@@ -34,16 +34,17 @@
                         <Font name="Source Sans 3 SemiBold" size="16.0" />
                      </font>
                   </Label>
-                  <TableView id="productTbl" fx:id="productTbl" layoutX="19.0" layoutY="116.0" prefHeight="420.0" prefWidth="1002.0">
+                  <TableView id="productTbl" fx:id="productTbl" layoutX="25.0" layoutY="106.0" prefHeight="420.0" prefWidth="1002.0">
                     <columns>
-                      <TableColumn id="productImgColumn" fx:id="productImgColumn" prefWidth="149.0" text="Product Image" />
-                      <TableColumn id="productNameColumn" fx:id="productNameColumn" prefWidth="162.0" text="Name" />
-                        <TableColumn id="categoryColumn" fx:id="categoryColumn" prefWidth="149.0" text="Category" />
-                        <TableColumn id="costPriceColumn" fx:id="costPriceColumn" prefWidth="85.0" text="Cost Price" />
-                        <TableColumn id="markupColumn" fx:id="markupColumn" prefWidth="88.0" text="Markup %" />
-                        <TableColumn id="stocksColumn" fx:id="stocksColumn" prefWidth="90.0" text="Stocks" />
-                        <TableColumn id="sellingPriceColumn" fx:id="sellingPriceColumn" prefWidth="94.0" text="Selling Price" />
-                        <TableColumn id="barcodeColumn" fx:id="barcodeColumn" prefWidth="184.0" text="Barcode" />
+                      <TableColumn id="productImgColumn" fx:id="productImgColumn" prefWidth="152.0" text="Product Image" />
+                      <TableColumn id="productNameColumn" fx:id="productNameColumn" prefWidth="185.0" text="Name" />
+                        <TableColumn id="categoryColumn" fx:id="categoryColumn" prefWidth="160.0" text="Category" />
+                        <TableColumn id="costPriceColumn" fx:id="costPriceColumn" prefWidth="82.0" text="Cost Price" visible="false" />
+                        <TableColumn id="markupColumn" fx:id="markupColumn" prefWidth="88.0" text="Markup %" visible="false" />
+                        <TableColumn id="stocksColumn" fx:id="stocksColumn" prefWidth="83.0" text="Stocks" />
+                        <TableColumn id="sellingPriceColumn" fx:id="sellingPriceColumn" prefWidth="109.0" text="Selling Price" />
+                        <TableColumn id="barcodeColumn" fx:id="barcodeColumn" prefWidth="194.0" text="Barcode" />
+                        <TableColumn fx:id="actionColumn" minWidth="9.0" prefWidth="116.0" text="Actions" />
                     </columns>
                   </TableView>
                   <MFXComboBox id="sortTbl" fx:id="sortTbl" floatMode="BORDER" floatingText="Sort" layoutX="899.0" layoutY="82.0" minHeight="0.0" minWidth="0.0" prefHeight="25.0" prefWidth="122.0" styleClass="mfx-combo-box" />
@@ -88,5 +89,6 @@
                </styleClass>
             </Button>
          </children></AnchorPane>
+      <StackPane fx:id="popupPane" prefHeight="400.0" prefWidth="1080.0" />
    </children>
 </StackPane>

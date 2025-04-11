@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.palexdev.materialfx.controls.MFXButton?>
+<?import io.github.palexdev.materialfx.controls.MFXComboBox?>
+<?import io.github.palexdev.materialfx.controls.MFXSpinner?>
+<?import io.github.palexdev.materialfx.controls.MFXTextField?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.shape.Line?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane fx:id="addMPane" prefHeight="400.0" prefWidth="1080.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.AddProductController">
+   <children>
+      <Label id="detailsLbl" alignment="CENTER" layoutX="79.0" layoutY="83.0" prefHeight="48.0" prefWidth="178.0" text="Details" textAlignment="CENTER">
+         <font>
+            <Font name="Source Sans 3 SemiBold" size="20.0" />
+         </font>
+         <graphic>
+            <ImageView fitHeight="33.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/info.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Label>
+      <MFXTextField id="PnameFld" fx:id="nameFld" floatMode="BORDER" floatingText="Name" layoutX="51.0" layoutY="148.0" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0">
+         <font>
+            <Font name="JetBrains Mono Regular" size="14.0" />
+         </font></MFXTextField>
+      <MFXTextField id="costPriceFld" fx:id="costPriceFld" floatMode="BORDER" floatingText="Cost Price" layoutX="51.0" layoutY="258.0" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
+      <MFXComboBox id="categoryCb" fx:id="categoryCb" floatMode="BORDER" floatingText="Category" layoutX="53.0" layoutY="200.0" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
+      <Label id="pricingLbl" alignment="CENTER" layoutX="451.0" layoutY="75.0" prefHeight="48.0" prefWidth="178.0" text="Pricing" textAlignment="CENTER">
+         <font>
+            <Font name="Source Sans 3 SemiBold" size="20.0" />
+         </font>
+         <graphic>
+            <ImageView fitHeight="34.0" fitWidth="35.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/best-price.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Label>
+      <MFXSpinner fx:id="stocksSpinner" editable="true" layoutX="53.0" layoutY="316.0" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" selectable="false" />
+      <Label id="productsLabel" alignment="CENTER" layoutX="423.0" layoutY="14.0" prefHeight="48.0" prefWidth="215.0" text="Products" textAlignment="CENTER">
+         <font>
+            <Font name="Inter 18pt ExtraBold" size="30.0" />
+         </font>
+         <graphic>
+            <ImageView fitHeight="44.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/best-product.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Label>
+      <MFXTextField id="markupFld" fx:id="markupFld" floatMode="BORDER" floatingText="Markup Percentage" layoutX="426.0" layoutY="139.0" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
+      <MFXTextField id="sellingPriceFld" fx:id="sellingPriceFld" floatMode="BORDER" floatingText="Selling Price" layoutX="426.0" layoutY="191.0" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
+      <Label id="actionsLbl" alignment="CENTER" layoutX="451.0" layoutY="240.0" prefHeight="37.0" prefWidth="178.0" text="Actions" textAlignment="CENTER">
+         <font>
+            <Font name="Source Sans 3 SemiBold" size="16.0" />
+         </font>
+         <graphic>
+            <ImageView fitHeight="33.0" fitWidth="40.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/task.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Label>
+      <Pane fx:id="picFrame" layoutX="835.0" layoutY="130.0" prefHeight="159.0" prefWidth="187.0">
+         <children>
+            <ImageView fx:id="productPic" fitHeight="153.0" fitWidth="170.0" layoutX="9.0" layoutY="2.0" pickOnBounds="true" preserveRatio="true" />
+         </children>
+      </Pane>
+      <Label id="imageLbl" alignment="CENTER" layoutX="839.0" layoutY="75.0" prefHeight="48.0" prefWidth="178.0" text="Image" textAlignment="CENTER">
+         <font>
+            <Font name="Source Sans 3 SemiBold" size="20.0" />
+         </font>
+         <graphic>
+            <ImageView fitHeight="33.0" fitWidth="52.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/product-image.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Label>
+      <MFXButton fx:id="btnPic" buttonType="RAISED" depthLevel="LEVEL1" graphicTextGap="10.0" layoutX="863.0" layoutY="297.0" prefHeight="37.0" prefWidth="130.0" rippleColor="#90ff4f" text="Take Picture">
+         <graphic>
+            <ImageView fitHeight="26.0" fitWidth="24.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/camera.png" />
+               </image>
+            </ImageView>
+         </graphic>
+         <font>
+            <Font name="Source Sans 3 SemiBold" size="12.0" />
+         </font></MFXButton>
+      <MFXButton fx:id="btnImport" buttonType="RAISED" depthLevel="LEVEL1" graphicTextGap="10.0" layoutX="864.0" layoutY="344.0" prefHeight="27.0" prefWidth="130.0" rippleColor="#90ff4f" text="Import">
+         <graphic>
+            <ImageView fitHeight="23.0" fitWidth="25.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/file-import.png" />
+               </image>
+            </ImageView>
+         </graphic>
+         <font>
+            <Font name="Source Sans 3 SemiBold" size="12.0" />
+         </font></MFXButton>
+      <MFXButton fx:id="btnEditCategory" buttonType="RAISED" depthLevel="LEVEL1" layoutX="471.0" layoutY="297.0" prefHeight="33.0" prefWidth="139.0" rippleColor="WHITE" text="Edit Category" textFill="WHITE">
+         <graphic>
+            <ImageView fitHeight="24.0" fitWidth="31.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/edit.png" />
+               </image>
+            </ImageView>
+         </graphic></MFXButton>
+      <MFXButton fx:id="btnPrintCode" buttonType="RAISED" depthLevel="LEVEL1" layoutX="471.0" layoutY="342.0" prefHeight="33.0" prefWidth="139.0" rippleColor="WHITE" text="Print Barcode" textFill="WHITE">
+         <graphic>
+            <ImageView fitHeight="24.0" fitWidth="39.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/printing.png" />
+               </image>
+            </ImageView>
+         </graphic></MFXButton>
+      <Line endX="65.0" layoutX="101.0" layoutY="38.0" startX="-108.0" stroke="#82b29b" strokeWidth="10.0" />
+      <MFXButton fx:id="btnAddProduct" buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" depthLevel="LEVEL1" graphicTextGap="10.0" layoutX="1022.0" layoutY="344.0" prefHeight="33.0" prefWidth="40.0" rippleColor="#90ff4f" text="Take Picture">
+         <graphic>
+            <ImageView fitHeight="35.0" fitWidth="30.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/add-package.png" />
+               </image>
+            </ImageView>
+         </graphic>
+         <font>
+            <Font name="Source Sans 3 SemiBold" size="12.0" />
+         </font>
+      </MFXButton>
+      <Label layoutX="191.0" layoutY="324.0" text="Stocks">
+         <font>
+            <Font name="Open Sans Bold" size="14.0" />
+         </font>
+      </Label>
+   </children>
+</AnchorPane>

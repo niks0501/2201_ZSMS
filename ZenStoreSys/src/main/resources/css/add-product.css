@@ -1,0 +1,148 @@
+#addMPane {
+    -fx-background-color: linear-gradient(to bottom, #F5EBE0 0%, white 100%);
+}
+
+#detailsLbl, #pricingLbl, #imageLbl, #actionsLbl {
+    -fx-background-color: #81B29A;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 10px; /* optional rounded corners */
+
+    /* Border styling */
+        -fx-border-color: white;
+        -fx-border-width: 2px;
+        -fx-border-radius: 8px;
+}
+
+#PnameFld .floating-text {
+    -fx-text-fill: -mfx-charcoal; /* Text color */
+    -fx-font-size: 14px;
+    -fx-font-family: "Open Sans";
+    -fx-font-weight: bold;
+}
+
+#categoryCb .floating-text {
+    -fx-text-fill: -mfx-charcoal; /* Text color */
+    -fx-font-size: 14px;
+    -fx-font-family: "Open Sans";
+    -fx-font-weight: bold;
+}
+
+#costPriceFld .floating-text {
+    -fx-text-fill: -mfx-charcoal; /* Text color */
+    -fx-font-size: 14px;
+    -fx-font-family: "Open Sans";
+    -fx-font-weight: bold;
+}
+
+#markupFld .floating-text {
+    -fx-text-fill: -mfx-charcoal; /* Text color */
+    -fx-font-size: 14px;
+    -fx-font-family: "Open Sans";
+    -fx-font-weight: bold;
+}
+
+#sellingPriceFld .floating-text {
+    -fx-text-fill: -mfx-charcoal; /* Text color */
+    -fx-font-size: 14px;
+    -fx-font-family: "Open Sans";
+    -fx-font-weight: bold;
+}
+
+#PnameFld, #categoryCb, #costPriceFld, #markupFld, #sellingPriceFld {
+    -fx-border-color: green; /* border color */
+    -fx-border-width: 1px;     /* border thickness */
+    -fx-border-radius: 6px;    /* rounded corners */
+}
+
+.mfx-spinner {
+  -fx-background-color: white;
+  -fx-background-radius: 5;
+  -fx-border-color: green;
+  -fx-border-radius: 5;
+  -fx-padding: 5 10 5 10;
+}
+
+.mfx-spinner .mfx-text-field {
+  -fx-background-insets: 0;
+  -fx-border-color: transparent;
+  -fx-border-width: 1;
+  -fx-border-insets: 0;
+  -fx-font-family: "Open Sans";
+  -fx-font-size: 14px;
+  -fx-text-fill: black;
+  -fx-font-weight: bold;
+}
+
+#picFrame {
+    -fx-border-color: green; /* border color */
+    -fx-border-width: 1px;     /* border thickness */
+    -fx-background-color: white; /* background color */
+    -fx-border-radius: 6px;    /* rounded corners */
+    -fx-background-radius: 6px; /* optional rounded corners */
+}
+
+.mfx-spinner .mfx-icon-wrapper {
+  -fx-background-color: #82B29B;
+  -mfx-size: 24;
+}
+
+.mfx-spinner .mfx-icon-wrapper .mfx-font-icon {
+  -mfx-color: white;
+  -mfx-size: 16;
+}
+
+#btnEditCategory, #btnPrintCode {
+    -fx-background-color: #81B29A; /* green */
+    -fx-font-weight: bold;
+    -fx-background-radius: 10px;
+    -fx-border-radius: 8px;
+    -fx-border-color: white;
+    -fx-border-width: 3px;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0, 0, 1);
+}
+
+/* Hover */
+#btnEditCategory:hover, #btnPrintCode:hover {
+    -fx-scale-x: 1.05;
+}
+
+/* Pressed */
+#btnEditCategory:pressed, #btnPrintCode:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+#btnPic, #btnImport, #btnAddProduct {
+    -fx-border-color: green; /* border color */
+}
+
+
+#btnPic:hover, #btnImport:hover, #btnAddProduct:hover {
+    -fx-scale-x: 1.05;
+}
+
+#btnPic:pressed, #btnImport:pressed, #btnAddProduct:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+#addMPane {
+    -fx-background-color: linear-gradient(to bottom, #F5EBE0 0%, white 100%);
+    -fx-border-color: #81b29a;
+    -fx-border-width: 3px;
+    -fx-border-style: solid;
+
+    /* Curved top corners, straight bottom corners */
+    -fx-border-radius: 30px 30px 0px 0px;
+    -fx-background-radius: 30px 30px 0px 0px;
+
+    /* Optional drop shadow effect */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 6, 0, 0, 2);
+}
+
+/* Add a decorative curved element to the top right */
+.curved-element {
+    -fx-background-color: #81b29a;
+    -fx-shape: "M 0 0 H 150 Q 100 50 150 100 V 0 Z";
+}

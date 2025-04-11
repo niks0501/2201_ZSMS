@@ -11,10 +11,11 @@
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<StackPane prefHeight="700.0" prefWidth="1080.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.DashboardController">
+<StackPane prefHeight="720.0" prefWidth="1080.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.DashboardController">
    <children>
       <AnchorPane prefHeight="720.0" prefWidth="1080.0" style="-fx-background-color: #F5EBE0;">
          <children>
+            <StackPane fx:id="contentPane" layoutY="74.0" prefHeight="645.0" prefWidth="1080.0" />
             <Pane fx:id="barPane" prefHeight="43.0" prefWidth="1080.0" style="-fx-background-color: #262626;">
                <children>
                   <Label layoutX="412.0" layoutY="12.0" text="ZSariSmart Management System" textAlignment="CENTER" textFill="WHITE">
@@ -39,27 +40,30 @@
                         <Circle fill="#ff1f1f" radius="6.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" />
                      </graphic>
                   </MFXButton>
-                  <MFXButton fx:id="btnMinimize" computeRadiusMultiplier="false" contentDisplay="GRAPHIC_ONLY" layoutX="394.0" layoutY="2.0" prefHeight="16.0" prefWidth="18.0" rippleAnimateBackground="false" rippleAnimationSpeed="0.0" rippleBackgroundOpacity="0.0" rippleColor="#a39595ec" rippleRadius="0.0" rippleRadiusMultiplier="0.0" style="-fx-background-color: transparent;" />
-                  <Circle fill="#1fff52" layoutX="1046.0" layoutY="22.0" radius="6.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" />
+                  <MFXButton fx:id="btnMinimize" computeRadiusMultiplier="false" contentDisplay="GRAPHIC_ONLY" layoutX="1024.0" layoutY="9.0" prefHeight="16.0" prefWidth="18.0" rippleAnimateBackground="false" rippleAnimationSpeed="0.0" rippleBackgroundOpacity="0.0" rippleColor="#a39595ec" rippleRadius="0.0" rippleRadiusMultiplier="0.0" style="-fx-background-color: transparent;">
+                     <graphic>
+                        <Circle fill="#1fff52" radius="6.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" />
+                     </graphic></MFXButton>
                </children>
             </Pane>
             <Pane layoutY="43.0" prefHeight="31.0" prefWidth="1080.0" style="-fx-background-color: #343434;">
                <children>
-                  <Button layoutX="1053.0" layoutY="3.0" minHeight="0.0" minWidth="0.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="26.0" style="-fx-background-color: transparent;" />
+                  <Button id="btnNav" fx:id="btnNav" layoutX="1046.0" layoutY="3.0" minHeight="0.0" minWidth="0.0" mnemonicParsing="false" prefHeight="22.0" prefWidth="26.0" style="-fx-background-color: transparent;">
+                     <graphic>
+                        <ImageView fitHeight="22.0" fitWidth="26.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../img/hamburger.png" />
+                           </image>
+                        </ImageView>
+                     </graphic></Button>
                   <Label layoutX="516.0" layoutY="3.0" text="ADMIN" textFill="WHITE">
                      <font>
                         <Font name="JetBrains Mono Regular" size="16.0" />
                      </font>
                   </Label>
-                  <ImageView fitHeight="22.0" fitWidth="26.0" layoutX="1053.0" layoutY="3.0" pickOnBounds="true" preserveRatio="true">
-                     <image>
-                        <Image url="@../../../img/hamburger.png" />
-                     </image>
-                  </ImageView>
                </children>
             </Pane>
             <fx:include fx:id="navigationPane" layoutY="75.0" source="topbar.fxml" />
-            <StackPane layoutY="171.0" prefHeight="548.0" prefWidth="1080.0" />
          </children>
       </AnchorPane>
    </children>
