@@ -1,0 +1,116 @@
+Index: ZenStoreSys/src/main/java/controllers/AddProductController.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package controllers;\r\n\r\nimport io.github.palexdev.materialfx.controls.MFXButton;\r\nimport io.github.palexdev.materialfx.controls.MFXComboBox;\r\nimport io.github.palexdev.materialfx.controls.MFXSpinner;\r\nimport io.github.palexdev.materialfx.controls.MFXTextField;\r\nimport io.github.palexdev.materialfx.controls.models.spinner.IntegerSpinnerModel;\r\nimport javafx.fxml.FXML;\r\nimport javafx.scene.control.Alert;\r\nimport javafx.scene.image.Image;\r\nimport javafx.scene.image.ImageView;\r\nimport javafx.scene.layout.AnchorPane;\r\nimport javafx.scene.layout.Pane;\r\nimport javafx.stage.FileChooser;\r\nimport other_classes.ProductDAO;\r\nimport table_models.Category;\r\nimport utils.ProductUtils;\r\n\r\n\r\nimport java.io.File;\r\n\r\npublic class AddProductController {\r\n\r\n    @FXML\r\n    private AnchorPane addMPane;\r\n\r\n    @FXML\r\n    private MFXButton btnAddProduct;\r\n\r\n    @FXML\r\n    private MFXButton btnEditCategory;\r\n\r\n    @FXML\r\n    private MFXButton btnImport;\r\n\r\n    @FXML\r\n    private MFXButton btnPic;\r\n\r\n    @FXML\r\n    private MFXButton btnPrintCode;\r\n\r\n    @FXML\r\n    private MFXComboBox<Category> categoryCb;\r\n\r\n    @FXML\r\n    private MFXTextField costPriceFld;\r\n\r\n    @FXML\r\n    private MFXTextField markupFld;\r\n\r\n    @FXML\r\n    private MFXTextField nameFld;\r\n\r\n    @FXML\r\n    private Pane picFrame;\r\n\r\n    @FXML\r\n    private ImageView productPic;\r\n\r\n    @FXML\r\n    private MFXTextField sellingPriceFld;\r\n\r\n    @FXML\r\n    private MFXSpinner<Integer> stocksSpinner;\r\n\r\n    private File selectedImageFile;\r\n\r\n    @FXML\r\n    public void initialize() {\r\n        // Load categories\r\n        loadCategories();\r\n\r\n        // Setup automatic selling price calculation\r\n        costPriceFld.textProperty().addListener((obs, old, newVal) -> calculateSellingPrice());\r\n        markupFld.textProperty().addListener((obs, old, newVal) -> calculateSellingPrice());\r\n\r\n        // Setup button actions\r\n        btnAddProduct.setOnAction(e -> addProduct());\r\n        btnPic.setOnAction(e -> captureImage());\r\n        btnImport.setOnAction(e -> importImage());\r\n\r\n        // Initialize the spinner model with IntegerSpinnerModel\r\n        IntegerSpinnerModel spinnerModel = new IntegerSpinnerModel(0);\r\n        stocksSpinner.setSpinnerModel(spinnerModel);\r\n        stocksSpinner.setPromptText(\"Stocks\");\r\n\r\n\r\n    }\r\n\r\n\r\n\r\n    private void loadCategories() {\r\n        categoryCb.setItems(ProductDAO.getAllCategories());\r\n    }\r\n\r\n    private void calculateSellingPrice() {\r\n        try {\r\n            double costPrice = Double.parseDouble(costPriceFld.getText().trim());\r\n            double markup = Double.parseDouble(markupFld.getText().trim());\r\n            double sellingPrice = costPrice * (1 + markup/100);\r\n            sellingPriceFld.setText(String.format(\"%.2f\", sellingPrice));\r\n        } catch (NumberFormatException e) {\r\n            // Ignore if input is not valid numbers\r\n        }\r\n    }\r\n\r\n    private void captureImage() {\r\n        // In a real app, this would open a camera interface\r\n        // For now, we'll just use the file import dialog\r\n        importImage();\r\n    }\r\n\r\n    private void importImage() {\r\n        FileChooser fileChooser = new FileChooser();\r\n        fileChooser.setTitle(\"Select Product Image\");\r\n        fileChooser.getExtensionFilters().add(\r\n                new FileChooser.ExtensionFilter(\"Image Files\", \"*.png\", \"*.jpg\", \"*.jpeg\")\r\n        );\r\n\r\n        File file = fileChooser.showOpenDialog(addMPane.getScene().getWindow());\r\n        if (file != null) {\r\n            selectedImageFile = file;\r\n\r\n            // Display image preview\r\n            try {\r\n                Image image = new Image(file.toURI().toString());\r\n                productPic.setImage(image);\r\n            } catch (Exception e) {\r\n                showAlert(Alert.AlertType.ERROR, \"Error loading image\");\r\n            }\r\n        }\r\n    }\r\n\r\n    private void addProduct() {\r\n        try {\r\n            // Validate inputs\r\n            if (nameFld.getText().trim().isEmpty() || categoryCb.getValue() == null ||\r\n                    costPriceFld.getText().trim().isEmpty() || markupFld.getText().trim().isEmpty()) {\r\n                showAlert(Alert.AlertType.WARNING, \"Please fill all required fields\");\r\n                return;\r\n            }\r\n\r\n            // Get values from fields\r\n            String name = nameFld.getText().trim();\r\n            Category category = (Category) categoryCb.getValue();\r\n            double costPrice = Double.parseDouble(costPriceFld.getText().trim());\r\n            double markup = Double.parseDouble(markupFld.getText().trim());\r\n            int stock = stocksSpinner.getValue();\r\n            double sellingPrice = Double.parseDouble(sellingPriceFld.getText().trim());\r\n\r\n            // Save image if selected\r\n            String imagePath = null;\r\n            if (selectedImageFile != null) {\r\n                imagePath = ProductUtils.saveProductImage(selectedImageFile);\r\n            }\r\n\r\n            // Insert product and get ID\r\n            int productId = ProductDAO.insertProduct(\r\n                    name, category.getId(), costPrice, markup, stock, sellingPrice, imagePath\r\n            );\r\n\r\n            if (productId > 0) {\r\n                // Generate and save barcode\r\n                String barcodePath = ProductUtils.generateBarcode(productId);\r\n                ProductDAO.updateBarcodePath(productId, barcodePath);\r\n\r\n                showAlert(Alert.AlertType.INFORMATION, \"Product added successfully!\");\r\n                clearFields();\r\n            } else {\r\n                showAlert(Alert.AlertType.ERROR, \"Failed to add product\");\r\n            }\r\n\r\n        } catch (NumberFormatException e) {\r\n            showAlert(Alert.AlertType.ERROR, \"Please enter valid numbers for prices\");\r\n        } catch (Exception e) {\r\n            e.printStackTrace();\r\n            showAlert(Alert.AlertType.ERROR, \"Error: \" + e.getMessage());\r\n        }\r\n    }\r\n\r\n    private void clearFields() {\r\n        nameFld.clear();\r\n        categoryCb.setValue(null);\r\n        costPriceFld.clear();\r\n        markupFld.clear();\r\n        sellingPriceFld.clear();\r\n        stocksSpinner.setValue(0);\r\n        productPic.setImage(null);\r\n        selectedImageFile = null;\r\n    }\r\n\r\n    private void showAlert(Alert.AlertType type, String message) {\r\n        Alert alert = new Alert(type);\r\n        alert.setTitle(type.toString());\r\n        alert.setHeaderText(null);\r\n        alert.setContentText(message);\r\n        alert.showAndWait();\r\n    }\r\n\r\n}\r\n
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ZenStoreSys/src/main/java/controllers/AddProductController.java b/ZenStoreSys/src/main/java/controllers/AddProductController.java
+--- a/ZenStoreSys/src/main/java/controllers/AddProductController.java	(revision 8067b694abe47a131995779f2385989e633786a8)
++++ b/ZenStoreSys/src/main/java/controllers/AddProductController.java	(date 1744637400981)
+@@ -70,6 +70,9 @@
+         // Load categories
+         loadCategories();
+ 
++        //Valiate cost price field
++        costPriceValidation();
++
+         // Setup automatic selling price calculation
+         costPriceFld.textProperty().addListener((obs, old, newVal) -> calculateSellingPrice());
+         markupFld.textProperty().addListener((obs, old, newVal) -> calculateSellingPrice());
+@@ -85,9 +88,30 @@
+         stocksSpinner.setPromptText("Stocks");
+ 
+ 
++
++
+     }
+ 
++    private void costPriceValidation() {
++        costPriceFld.textProperty().addListener((observable, oldValue, newValue) -> {
++            if (newValue != null && newValue.contains("-")) {
++                // Play system beep
++                java.awt.Toolkit.getDefaultToolkit().beep();
+ 
++                // Show warning dialog
++                javafx.application.Platform.runLater(() -> {
++                    Alert alert = new Alert(Alert.AlertType.WARNING);
++                    alert.setTitle("Invalid Input");
++                    alert.setHeaderText("Negative Value Not Allowed");
++                    alert.setContentText("Cost price cannot be negative. Please enter a positive value.");
++                    alert.showAndWait();
++
++                    // Reset the field after dialog closes
++                    costPriceFld.clear();
++                });
++            }
++        });
++    }
+ 
+     private void loadCategories() {
+         categoryCb.setItems(ProductDAO.getAllCategories());
+Index: ZenStoreSys/src/main/java/other_classes/ProductDAO.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package other_classes;\r\n\r\nimport javafx.collections.FXCollections;\r\nimport javafx.collections.ObservableList;\r\nimport table_models.Category;\r\n\r\nimport java.sql.*;\r\n\r\npublic class ProductDAO {\r\n\r\n    // Get all categories for the ComboBox\r\n    public static ObservableList<Category> getAllCategories() {\r\n        ObservableList<Category> categories = FXCollections.observableArrayList();\r\n        String query = \"SELECT category_id, category_name FROM categories\";\r\n\r\n        try (Connection conn = DBConnect.getConnection();\r\n             PreparedStatement stmt = conn.prepareStatement(query);\r\n             ResultSet rs = stmt.executeQuery()) {\r\n\r\n            while (rs.next()) {\r\n                categories.add(new Category(\r\n                        rs.getInt(\"category_id\"),\r\n                        rs.getString(\"category_name\")\r\n                ));\r\n            }\r\n        } catch (SQLException e) {\r\n            e.printStackTrace();\r\n        }\r\n\r\n        return categories;\r\n    }\r\n\r\n    // Insert a new product\r\n    public static int insertProduct(String name, int categoryId, double costPrice,\r\n                                    double markup, int stock, double sellingPrice,\r\n                                    String imagePath) throws SQLException {\r\n\r\n        String sql = \"INSERT INTO products (name, category_id, cost_price, \" +\r\n                \"markup_percentage, stock, selling_price, image_path, last_restock) \" +\r\n                \"VALUES (?, ?, ?, ?, ?, ?, ?, NOW())\";\r\n\r\n        try (Connection conn = DBConnect.getConnection();\r\n             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {\r\n\r\n            stmt.setString(1, name);\r\n            stmt.setInt(2, categoryId);\r\n            stmt.setDouble(3, costPrice);\r\n            stmt.setDouble(4, markup);\r\n            stmt.setInt(5, stock);\r\n            stmt.setDouble(6, sellingPrice);\r\n            stmt.setString(7, imagePath != null ? imagePath : \"\");\r\n\r\n            stmt.executeUpdate();\r\n\r\n            // Get generated product_id\r\n            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {\r\n                if (generatedKeys.next()) {\r\n                    return generatedKeys.getInt(1);\r\n                }\r\n            }\r\n        }\r\n\r\n        return -1; // Failed to get product ID\r\n    }\r\n\r\n    \r\n\r\n    // Update barcode path after generation\r\n    public static boolean updateBarcodePath(int productId, String barcodePath) {\r\n        String sql = \"UPDATE products SET barcode_path = ? WHERE product_id = ?\";\r\n\r\n        try (Connection conn = DBConnect.getConnection();\r\n             PreparedStatement stmt = conn.prepareStatement(sql)) {\r\n\r\n            stmt.setString(1, barcodePath);\r\n            stmt.setInt(2, productId);\r\n\r\n            return stmt.executeUpdate() > 0;\r\n        } catch (SQLException e) {\r\n            e.printStackTrace();\r\n            return false;\r\n        }\r\n    }\r\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/ZenStoreSys/src/main/java/other_classes/ProductDAO.java b/ZenStoreSys/src/main/java/other_classes/ProductDAO.java
+--- a/ZenStoreSys/src/main/java/other_classes/ProductDAO.java	(revision 8067b694abe47a131995779f2385989e633786a8)
++++ b/ZenStoreSys/src/main/java/other_classes/ProductDAO.java	(date 1744620789774)
+@@ -30,37 +30,33 @@
+         return categories;
+     }
+ 
+-    // Insert a new product
+     public static int insertProduct(String name, int categoryId, double costPrice,
+                                     double markup, int stock, double sellingPrice,
+                                     String imagePath) throws SQLException {
+ 
+-        String sql = "INSERT INTO products (name, category_id, cost_price, " +
+-                "markup_percentage, stock, selling_price, image_path, last_restock) " +
+-                "VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
++        String sql = "{CALL sp_insert_product(?, ?, ?, ?, ?, ?, ?, ?)}";
+ 
+         try (Connection conn = DBConnect.getConnection();
+-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
++             CallableStatement cstmt = conn.prepareCall(sql)) {
+ 
+-            stmt.setString(1, name);
+-            stmt.setInt(2, categoryId);
+-            stmt.setDouble(3, costPrice);
+-            stmt.setDouble(4, markup);
+-            stmt.setInt(5, stock);
+-            stmt.setDouble(6, sellingPrice);
+-            stmt.setString(7, imagePath != null ? imagePath : "");
++            // Set IN parameters
++            cstmt.setString(1, name);
++            cstmt.setInt(2, categoryId);
++            cstmt.setDouble(3, costPrice);
++            cstmt.setDouble(4, markup);
++            cstmt.setInt(5, stock);
++            cstmt.setDouble(6, sellingPrice);
++            cstmt.setString(7, imagePath != null ? imagePath : "");
+ 
+-            stmt.executeUpdate();
++            // Register OUT parameter
++            cstmt.registerOutParameter(8, java.sql.Types.INTEGER);
+ 
+-            // Get generated product_id
+-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+-                if (generatedKeys.next()) {
+-                    return generatedKeys.getInt(1);
+-                }
+-            }
+-        }
++            // Execute procedure
++            cstmt.execute();
+ 
+-        return -1; // Failed to get product ID
++            // Get the product ID from the OUT parameter
++            return cstmt.getInt(8);
++        }
+     }
+ 
+     
