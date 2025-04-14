@@ -71,20 +71,7 @@ public class AddProductController {
         // Load categories
         loadCategories();
 
-        // Setup input validation for cost price field
-        costPriceFld.textProperty().addListener((obs, oldVal, newVal) -> {
-            if (newVal != null && newVal.contains("-")) {
-                // Play Windows alert sound
-                java.awt.Toolkit.getDefaultToolkit().beep();
-
-                costPriceFld.clear();
-
-                // Show styled warning dialog
-                showStyledAlert(Alert.AlertType.WARNING, "Negative values are not allowed for cost price");
-            } else {
-                calculateSellingPrice(); // Only calculate if input is valid
-            }
-        });
+        validateCostPrice();
 
 
         markupFld.textProperty().addListener((obs, old, newVal) -> calculateSellingPrice());
@@ -99,6 +86,22 @@ public class AddProductController {
         stocksSpinner.setSpinnerModel(spinnerModel);
         stocksSpinner.setPromptText("Stocks");
 
+    }
+
+    private void validateCostPrice(){
+        costPriceFld.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && newVal.contains("-")) {
+                // Play Windows alert sound
+                java.awt.Toolkit.getDefaultToolkit().beep();
+
+                costPriceFld.clear();
+
+                // Show styled warning dialog
+                showStyledAlert(Alert.AlertType.WARNING, "Negative values are not allowed for cost price");
+            } else {
+                calculateSellingPrice(); // Only calculate if input is valid
+            }
+        });
     }
 
     private void showStyledAlert(Alert.AlertType type, String message) {
