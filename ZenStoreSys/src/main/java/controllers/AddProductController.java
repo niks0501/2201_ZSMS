@@ -4,9 +4,10 @@ import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXComboBox;
 import io.github.palexdev.materialfx.controls.MFXSpinner;
 import io.github.palexdev.materialfx.controls.MFXTextField;
-import io.github.palexdev.materialfx.controls.models.spinner.IntegerSpinnerModel;
+import io.github.palexdev.materialfx.controls.models.spinner.*;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
+import javafx.scene.control.DialogPane;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
@@ -70,8 +71,9 @@ public class AddProductController {
         // Load categories
         loadCategories();
 
-        // Setup automatic selling price calculation
-        costPriceFld.textProperty().addListener((obs, old, newVal) -> calculateSellingPrice());
+        validateCostPrice();
+
+
         markupFld.textProperty().addListener((obs, old, newVal) -> calculateSellingPrice());
 
         // Setup button actions
@@ -80,14 +82,110 @@ public class AddProductController {
         btnImport.setOnAction(e -> importImage());
 
         // Initialize the spinner model with IntegerSpinnerModel
-        IntegerSpinnerModel spinnerModel = new IntegerSpinnerModel(0);
+        IntegerSpinnerModel spinnerModel = new IntegerSpinnerModel(10);
         stocksSpinner.setSpinnerModel(spinnerModel);
         stocksSpinner.setPromptText("Stocks");
 
-
     }
 
+    private void validateCostPrice(){
+        costPriceFld.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null && newVal.contains("-")) {
+                // Play Windows alert sound
+                java.awt.Toolkit.getDefaultToolkit().beep();
 
+                costPriceFld.clear();
+
+                // Show styled warning dialog
+                showStyledAlert(Alert.AlertType.WARNING, "Negative values are not allowed for cost price");
+            } else {
+                calculateSellingPrice(); // Only calculate if input is valid
+            }
+        });
+    }
+
+    private void showStyledAlert(Alert.AlertType type, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle("Product Management");
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+
+        // Get the dialog pane
+        DialogPane dialogPane = alert.getDialogPane();
+
+        // Add custom stylesheet
+        dialogPane.getStylesheets().add(getClass().getResource("/css/products.css").toExternalForm());
+        dialogPane.getStyleClass().add("styled-alert");
+        dialogPane.setId("elegant-dialog");
+
+        // Apply dialog style
+        dialogPane.setStyle(
+                "-fx-background-color: white;" +
+                        "-fx-background-radius: 10px;" +
+                        "-fx-border-radius: 10px;" +
+                        "-fx-border-color: #81B29A;" +
+                        "-fx-border-width: 2px;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 10, 0.2, 0.1, 0);"
+        );
+
+        // Get the button and add style class
+        javafx.scene.control.Button okButton = (javafx.scene.control.Button)
+                dialogPane.lookupButton(javafx.scene.control.ButtonType.OK);
+        okButton.getStyleClass().add("dialog-button");
+
+        // Define normal, hover, and pressed styles
+        String normalStyle = "-fx-background-color: #81B29A;" +
+                "-fx-text-fill: white;" +
+                "-fx-font-weight: bold;" +
+                "-fx-background-radius: 5px;" +
+                "-fx-padding: 8px 20px;" +
+                "-fx-cursor: hand;" +
+                "-fx-transition: all 0.2s ease;";
+
+        String hoverStyle = normalStyle +
+                "-fx-background-color: #6d9a86;" +  // Darker shade for hover
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 4, 0.1, 0, 1);" +
+                "-fx-scale-x: 1.03;" +
+                "-fx-scale-y: 1.03;";
+
+        String pressedStyle = normalStyle +
+                "-fx-background-color: #5e8a75;" +  // Even darker shade for pressed
+                "-fx-scale-x: 0.95;" +             // Scale down when pressed
+                "-fx-scale-y: 0.95;" +
+                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 2, 0.1, 0, 1);";
+
+        // Apply initial style
+        okButton.setStyle(normalStyle);
+
+        // Add mouse event handlers for interactive effects
+        okButton.setOnMouseEntered(e -> okButton.setStyle(hoverStyle));
+        okButton.setOnMouseExited(e -> okButton.setStyle(normalStyle));
+        okButton.setOnMousePressed(e -> okButton.setStyle(pressedStyle));
+        okButton.setOnMouseReleased(e -> {
+            // Check if mouse is still within button bounds when released
+            if (okButton.isHover()) {
+                okButton.setStyle(hoverStyle);
+            } else {
+                okButton.setStyle(normalStyle);
+            }
+        });
+
+        // Style the content area
+        dialogPane.lookup(".content.label").setStyle(
+                "-fx-font-size: 14px;" +
+                        "-fx-padding: 10px 0px;" +
+                        "-fx-text-fill: #333333;" +
+                        "-fx-font-family: 'Open Sans';"
+        );
+
+        // Style the graphic (icon)
+        if (dialogPane.getGraphic() != null) {
+            dialogPane.getGraphic().setStyle("-fx-opacity: 0.9;");
+        }
+
+        // Show and wait
+        alert.showAndWait();
+    }
 
     private void loadCategories() {
         categoryCb.setItems(ProductDAO.getAllCategories());

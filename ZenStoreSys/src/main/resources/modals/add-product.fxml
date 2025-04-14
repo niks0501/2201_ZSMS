@@ -30,7 +30,7 @@
          <font>
             <Font name="JetBrains Mono Regular" size="14.0" />
          </font></MFXTextField>
-      <MFXTextField id="costPriceFld" fx:id="costPriceFld" floatMode="BORDER" floatingText="Cost Price" layoutX="51.0" layoutY="258.0" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
+      <MFXTextField id="costPriceFld" fx:id="costPriceFld" floatMode="BORDER" floatingText="Cost Price" layoutX="51.0" layoutY="258.0" measureUnit="₱" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
       <MFXComboBox id="categoryCb" fx:id="categoryCb" floatMode="BORDER" floatingText="Category" layoutX="53.0" layoutY="200.0" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
       <Label id="pricingLbl" alignment="CENTER" layoutX="451.0" layoutY="75.0" prefHeight="48.0" prefWidth="178.0" text="Pricing" textAlignment="CENTER">
          <font>
@@ -57,8 +57,8 @@
             </ImageView>
          </graphic>
       </Label>
-      <MFXTextField id="markupFld" fx:id="markupFld" floatMode="BORDER" floatingText="Markup Percentage" layoutX="426.0" layoutY="139.0" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
-      <MFXTextField id="sellingPriceFld" fx:id="sellingPriceFld" floatMode="BORDER" floatingText="Selling Price" layoutX="426.0" layoutY="191.0" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
+      <MFXTextField id="markupFld" fx:id="markupFld" floatMode="BORDER" floatingText="Markup Percentage" layoutX="426.0" layoutY="139.0" measureUnit="\%" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
+      <MFXTextField id="sellingPriceFld" fx:id="sellingPriceFld" floatMode="BORDER" floatingText="Selling Price" layoutX="426.0" layoutY="191.0" measureUnit="₱" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
       <Label id="actionsLbl" alignment="CENTER" layoutX="451.0" layoutY="240.0" prefHeight="37.0" prefWidth="178.0" text="Actions" textAlignment="CENTER">
          <font>
             <Font name="Source Sans 3 SemiBold" size="16.0" />
@@ -141,7 +141,7 @@
       </MFXButton>
       <Label layoutX="191.0" layoutY="324.0" text="Stocks">
          <font>
-            <Font name="Open Sans Bold" size="14.0" />
+            <Font name="System Bold" size="14.0" />
          </font>
       </Label>
    </children>
