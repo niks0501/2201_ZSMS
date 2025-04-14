@@ -10,5 +10,6 @@ module com.company.zenstoresys {
 
 
     opens controllers to javafx.fxml;
+    opens table_models to javafx.base, javafx.fxml;
     exports com.company.zenstoresys;
 }

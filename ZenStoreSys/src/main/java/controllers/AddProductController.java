@@ -66,6 +66,9 @@ public class AddProductController {
 
     private File selectedImageFile;
 
+    private ProductController productController;
+
+
     @FXML
     public void initialize() {
         // Load categories
@@ -86,6 +89,10 @@ public class AddProductController {
         stocksSpinner.setSpinnerModel(spinnerModel);
         stocksSpinner.setPromptText("Stocks");
 
+    }
+
+    public void setProductController(ProductController productController) {
+        this.productController = productController;
     }
 
     private void validateCostPrice(){
@@ -263,6 +270,10 @@ public class AddProductController {
                 ProductDAO.updateBarcodePath(productId, barcodePath);
 
                 showAlert(Alert.AlertType.INFORMATION, "Product added successfully!");
+                // Refresh the product table
+                if (productController != null) {
+                    productController.loadProductsTable();
+                }
                 clearFields();
             } else {
                 showAlert(Alert.AlertType.ERROR, "Failed to add product");

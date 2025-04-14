@@ -8,6 +8,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -20,17 +21,19 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import other_classes.ProductDAO;
+import table_models.Product;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 
 public class ProductController {
 
     @FXML
-    private TableColumn<?, ?> actionColumn;
+    private TableColumn<Product, Button> actionColumn;
 
     @FXML
-    private TableColumn<?, String> barcodeColumn;
+    private TableColumn<Product, String> barcodeColumn;
 
     @FXML
     private MFXButton btnAddProduct;
@@ -39,13 +42,13 @@ public class ProductController {
     private Button btnPopup;
 
     @FXML
-    private TableColumn<?, ?> categoryColumn;
+    private TableColumn<Product, String> categoryColumn;
 
     @FXML
-    private TableColumn<?, ?> costPriceColumn;
+    private TableColumn<Product, BigDecimal> costPriceColumn;
 
     @FXML
-    private TableColumn<?, ?> markupColumn;
+    private TableColumn<Product, BigDecimal> markupColumn;
 
     @FXML
     private Pane prodContentPane;
@@ -54,13 +57,13 @@ public class ProductController {
     private StackPane prodMainFrame;
 
     @FXML
-    private TableColumn<?, ?> productImgColumn;
+    private TableColumn<Product, ImageView> productImgColumn;
 
     @FXML
-    private TableColumn<?, ?> productNameColumn;
+    private TableColumn<Product, String> productNameColumn;
 
     @FXML
-    private TableView<?> productTbl;
+    private TableView<Product> productTbl;
 
     @FXML
     private MFXPagination productTblPage;
@@ -69,13 +72,13 @@ public class ProductController {
     private MFXTextField searchFld;
 
     @FXML
-    private TableColumn<?, ?> sellingPriceColumn;
+    private TableColumn<Product, BigDecimal> sellingPriceColumn;
 
     @FXML
     private MFXComboBox<?> sortTbl;
 
     @FXML
-    private TableColumn<?, ?> stocksColumn;
+    private TableColumn<Product, Integer> stocksColumn;
 
     @FXML
     private StackPane popupPane;
@@ -97,12 +100,28 @@ public class ProductController {
                 btnPopup.getLayoutY()
         });
 
+        loadAddProductForm();
 
+        // Button click handler
+        btnPopup.setOnAction(event -> toggleAddProductForm());
+
+        // Set up table columns
+        setupTableColumns();
+
+        // Load products into the table
+        loadProductsTable();
+    }
+
+    private void loadAddProductForm(){
         // Load the add-product form
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/modals/add-product.fxml"));
             addProductForm = loader.load();
             addProductForm.getStylesheets().add(getClass().getResource("/css/add-product.css").toExternalForm());
+
+            // Get controller and set reference to this ProductController
+            AddProductController addProductController = loader.getController();
+            addProductController.setProductController(this);
 
             // Position form initially off-screen
             addProductForm.setTranslateY(getInitialYPosition());
@@ -113,12 +132,26 @@ public class ProductController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        // Button click handler
-        btnPopup.setOnAction(event -> toggleAddProductForm());
     }
 
+    private void setupTableColumns() {
+        productImgColumn.setCellValueFactory(new PropertyValueFactory<>("productImage"));
+        productNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
+        costPriceColumn.setCellValueFactory(new PropertyValueFactory<>("costPrice"));
+        markupColumn.setCellValueFactory(new PropertyValueFactory<>("markupPercentage"));
+        sellingPriceColumn.setCellValueFactory(new PropertyValueFactory<>("sellingPrice"));
+        stocksColumn.setCellValueFactory(new PropertyValueFactory<>("stock"));
+        barcodeColumn.setCellValueFactory(new PropertyValueFactory<>("barcodeImage"));
+        actionColumn.setCellValueFactory(new PropertyValueFactory<>("actionButton"));
+    }
 
+    public void loadProductsTable() {
+        ObservableList<Product> productList = ProductDAO.getAllProducts();
+        productTbl.setItems(productList);
+
+
+    }
 
     private double getInitialYPosition() {
         // If manually set, use that value, otherwise auto-calculate
