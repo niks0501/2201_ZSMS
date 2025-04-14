@@ -47,7 +47,7 @@
                         <TableColumn fx:id="actionColumn" minWidth="9.0" prefWidth="116.0" text="Actions" />
                     </columns>
                   </TableView>
-                  <MFXComboBox id="sortTbl" fx:id="sortTbl" floatMode="BORDER" floatingText="Sort" layoutX="899.0" layoutY="82.0" minHeight="0.0" minWidth="0.0" prefHeight="25.0" prefWidth="122.0" styleClass="mfx-combo-box" />
+                  <MFXComboBox id="sortTbl" fx:id="sortTbl" floatMode="BORDER" floatingText="Sort" layoutX="899.0" layoutY="79.0" minHeight="0.0" minWidth="0.0" prefHeight="25.0" prefWidth="122.0" styleClass="mfx-combo-box" />
                   <ImageView fitHeight="36.0" fitWidth="36.0" layoutX="310.0" layoutY="65.0" pickOnBounds="true" preserveRatio="true">
                      <image>
                         <Image url="@../../../img/google.png" />
@@ -89,6 +89,6 @@
                </styleClass>
             </Button>
          </children></AnchorPane>
-      <StackPane fx:id="popupPane" prefHeight="400.0" prefWidth="1080.0" />
+      <StackPane fx:id="popupPane" prefHeight="277.0" prefWidth="611.0" visible="false" />
    </children>
 </StackPane>
