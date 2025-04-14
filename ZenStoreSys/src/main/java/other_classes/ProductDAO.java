@@ -30,37 +30,33 @@ public class ProductDAO {
         return categories;
     }
 
-    // Insert a new product
     public static int insertProduct(String name, int categoryId, double costPrice,
                                     double markup, int stock, double sellingPrice,
                                     String imagePath) throws SQLException {
 
-        String sql = "INSERT INTO products (name, category_id, cost_price, " +
-                "markup_percentage, stock, selling_price, image_path, last_restock) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, NOW())";
+        String sql = "{CALL sp_insert_product(?, ?, ?, ?, ?, ?, ?, ?)}";
 
         try (Connection conn = DBConnect.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+             CallableStatement cstmt = conn.prepareCall(sql)) {
 
-            stmt.setString(1, name);
-            stmt.setInt(2, categoryId);
-            stmt.setDouble(3, costPrice);
-            stmt.setDouble(4, markup);
-            stmt.setInt(5, stock);
-            stmt.setDouble(6, sellingPrice);
-            stmt.setString(7, imagePath != null ? imagePath : "");
+            // Set IN parameters
+            cstmt.setString(1, name);
+            cstmt.setInt(2, categoryId);
+            cstmt.setDouble(3, costPrice);
+            cstmt.setDouble(4, markup);
+            cstmt.setInt(5, stock);
+            cstmt.setDouble(6, sellingPrice);
+            cstmt.setString(7, imagePath != null ? imagePath : "");
 
-            stmt.executeUpdate();
+            // Register OUT parameter
+            cstmt.registerOutParameter(8, java.sql.Types.INTEGER);
 
-            // Get generated product_id
-            try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
-                if (generatedKeys.next()) {
-                    return generatedKeys.getInt(1);
-                }
-            }
+            // Execute procedure
+            cstmt.execute();
+
+            // Get the product ID from the OUT parameter
+            return cstmt.getInt(8);
         }
-
-        return -1; // Failed to get product ID
     }
 
     
