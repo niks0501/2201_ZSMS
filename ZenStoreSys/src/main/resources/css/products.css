@@ -25,6 +25,64 @@
     -fx-font-weight: bold;
 }
 
+.pagination {
+    -fx-background-color: white;
+    -fx-border-color: transparent;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+
+.pagination .control-box {
+    -fx-spacing: 5;
+    -fx-alignment: center;
+
+}
+
+.pagination .number-button {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-text-fill: #555;
+    -fx-font-size: 14px;
+    -fx-background-radius: 6;
+    -fx-cursor: hand;
+
+    /* Height control */
+    -fx-min-height: 25px;
+    -fx-pref-height: 25px;
+    -fx-max-height: 35px;
+}
+
+.pagination .number-button:selected {
+    -fx-background-color: #81B29A;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-border-radius: 6;
+}
+
+.pagination .left-arrow,
+.pagination .right-arrow {
+    -fx-background-color: #81B29A;
+    -fx-text-fill: #81B29A;
+    -fx-background-radius: 50%;
+    -fx-min-width: 10;
+    -fx-min-height: 10;
+    -fx-max-width: 30;
+    -fx-max-height: 30;
+    -fx-alignment: center;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 4, 0.3, 0, 1);
+}
+
+.pagination .left-arrow:hover,
+.pagination .right-arrow:hover,
+.pagination .number-button:hover {
+    -fx-opacity: 0.85;
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+
+
 #sortTbl {
     -fx-border-radius: 8px;         /* Rounded edges */
     -fx-background-radius: 8px;     /* Ensures smooth rounding */
@@ -37,10 +95,6 @@
     -fx-font-size: 13px;
     -fx-font-family: "Open Sans";
     -fx-font-weight: bold;
-}
-
-.mfx-combo-box:focus-within .caret .mfx-font-icon {
-  -mfx-color: #81b29a;
 }
 
 .mfx-combo-box-cell {
@@ -69,22 +123,10 @@
   -mfx-color: -mfx-charcoal;
 }
 
-.mfx-pagination .mfx-page:selected {
-  -fx-background-color: #81b29a;
-  -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 15, 0.16, 2, 4);
-  -fx-font-size: 14;
-  -fx-text-fill: white;
-  -fx-font-weight: bold;
-}
 
-.pages-popup .virtual-flow .mfx-list-cell:hover {
-  -fx-background-color: #F4EBFF;
-  -fx-background-radius: 5;
-}
 
-.mfx-pagination .mfx-icon-wrapper {
-  -fx-background-color: #f0f0f0;
-}
+
+
 
 #btnAddProduct:hover {
     -fx-scale-x: 1.10;
@@ -121,7 +163,7 @@
 
 #productTbl .column-header {
     -fx-font-weight: bold;
-    -fx-alignment: CENTER-LEFT;
+    -fx-alignment: CENTER;
 }
 
 #productTbl .table-row-cell {
@@ -142,7 +184,8 @@
 
 #productTbl .table-cell {
     -fx-text-fill: #333333;
-    -fx-font-size: 12.5px;
+    -fx-font-size: 14px;
+    -fx-alignment: CENTER;
 }
 
 #btnPopup:hover {

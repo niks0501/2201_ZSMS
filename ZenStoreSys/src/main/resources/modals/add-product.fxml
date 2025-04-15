@@ -58,7 +58,7 @@
          </graphic>
       </Label>
       <MFXTextField id="markupFld" fx:id="markupFld" floatMode="BORDER" floatingText="Markup Percentage" layoutX="426.0" layoutY="139.0" measureUnit="\%" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
-      <MFXTextField id="sellingPriceFld" fx:id="sellingPriceFld" floatMode="BORDER" floatingText="Selling Price" layoutX="426.0" layoutY="191.0" measureUnit="₱" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
+      <MFXTextField id="sellingPriceFld" fx:id="sellingPriceFld" allowEdit="false" floatMode="BORDER" floatingText="Selling Price" layoutX="426.0" layoutY="191.0" measureUnit="₱" minHeight="0.0" minWidth="0.0" prefHeight="37.0" prefWidth="228.0" />
       <Label id="actionsLbl" alignment="CENTER" layoutX="451.0" layoutY="240.0" prefHeight="37.0" prefWidth="178.0" text="Actions" textAlignment="CENTER">
          <font>
             <Font name="Source Sans 3 SemiBold" size="16.0" />

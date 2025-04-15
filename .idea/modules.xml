@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/2201_ZSMS.iml" filepath="$PROJECT_DIR$/.idea/2201_ZSMS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/ZenStore.iml" filepath="$PROJECT_DIR$/.idea/ZenStore.iml" />
     </modules>
   </component>
 </project>

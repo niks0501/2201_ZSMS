@@ -3,6 +3,7 @@ package other_classes;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import table_models.Category;
+import table_models.Product;
 
 import java.sql.*;
 
@@ -76,5 +77,32 @@ public class ProductDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    public static ObservableList<Product> getAllProducts() {
+        ObservableList<Product> products = FXCollections.observableArrayList();
+
+        try (Connection conn = DBConnect.getConnection();
+             CallableStatement stmt = conn.prepareCall("{CALL GetAllProducts()}");
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                products.add(new Product(
+                        rs.getInt("product_id"),
+                        rs.getString("image_path"),
+                        rs.getString("name"),
+                        rs.getString("category_name"),
+                        rs.getBigDecimal("cost_price"),
+                        rs.getBigDecimal("markup_percentage"),
+                        rs.getInt("stock"),
+                        rs.getBigDecimal("selling_price"),
+                        rs.getString("barcode_path")
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return products;
     }
 }

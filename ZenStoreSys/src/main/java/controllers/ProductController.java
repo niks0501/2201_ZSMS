@@ -2,12 +2,12 @@ package controllers;
 
 import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXComboBox;
-import io.github.palexdev.materialfx.controls.MFXPagination;
 import io.github.palexdev.materialfx.controls.MFXTextField;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -20,32 +20,32 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import other_classes.ProductDAO;
+import services.ProductLoadService;
+import table_models.Product;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 
 public class ProductController {
 
     @FXML
-    private TableColumn<?, ?> actionColumn;
+    private TableColumn<Product, Button> actionColumn;
 
     @FXML
-    private TableColumn<?, String> barcodeColumn;
-
-    @FXML
-    private MFXButton btnAddProduct;
+    private TableColumn<Product, String> barcodeColumn;
 
     @FXML
     private Button btnPopup;
 
     @FXML
-    private TableColumn<?, ?> categoryColumn;
+    private TableColumn<Product, String> categoryColumn;
 
     @FXML
-    private TableColumn<?, ?> costPriceColumn;
+    private TableColumn<Product, BigDecimal> costPriceColumn;
 
     @FXML
-    private TableColumn<?, ?> markupColumn;
+    private TableColumn<Product, BigDecimal> markupColumn;
 
     @FXML
     private Pane prodContentPane;
@@ -54,28 +54,28 @@ public class ProductController {
     private StackPane prodMainFrame;
 
     @FXML
-    private TableColumn<?, ?> productImgColumn;
+    private TableColumn<Product, ImageView> productImgColumn;
 
     @FXML
-    private TableColumn<?, ?> productNameColumn;
+    private TableColumn<Product, String> productNameColumn;
 
     @FXML
-    private TableView<?> productTbl;
+    private TableView<Product> productTbl;
 
     @FXML
-    private MFXPagination productTblPage;
+    private Pagination productTblPage;
 
     @FXML
     private MFXTextField searchFld;
 
     @FXML
-    private TableColumn<?, ?> sellingPriceColumn;
+    private TableColumn<Product, BigDecimal> sellingPriceColumn;
 
     @FXML
     private MFXComboBox<?> sortTbl;
 
     @FXML
-    private TableColumn<?, ?> stocksColumn;
+    private TableColumn<Product, Integer> stocksColumn;
 
     @FXML
     private StackPane popupPane;
@@ -84,6 +84,8 @@ public class ProductController {
     private boolean isFormVisible = false;
     private double initialYPosition = -1; // Default: auto-calculated
     private double finalYPosition = 250;    // Default: top of container
+    private ProductLoadService productLoadService;
+    private ObservableList<Product> allProducts;
 
     @FXML
     public void initialize() {
@@ -97,12 +99,44 @@ public class ProductController {
                 btnPopup.getLayoutY()
         });
 
+        loadAddProductForm();
 
+        // Button click handler
+        btnPopup.setOnAction(event -> toggleAddProductForm());
+
+        // Set up table columns
+        setupTableColumns();
+
+        // Initialize product load service
+        productLoadService = ProductLoadService.getInstance();
+
+        // Set up service success handler
+        productLoadService.setOnSucceeded(event -> {
+            allProducts = productLoadService.getValue();
+            initializePagination(allProducts);
+        });
+
+        // Set up service failure handler
+        productLoadService.setOnFailed(event -> {
+            Throwable exception = productLoadService.getException();
+            System.err.println("Failed to load products: " + exception.getMessage());
+            // Display error to user if needed
+        });
+
+        // Start loading products
+        productLoadService.reloadProducts();
+    }
+
+    private void loadAddProductForm(){
         // Load the add-product form
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/modals/add-product.fxml"));
             addProductForm = loader.load();
             addProductForm.getStylesheets().add(getClass().getResource("/css/add-product.css").toExternalForm());
+
+            // Get controller and set reference to this ProductController
+            AddProductController addProductController = loader.getController();
+            addProductController.setProductController(this);
 
             // Position form initially off-screen
             addProductForm.setTranslateY(getInitialYPosition());
@@ -113,12 +147,51 @@ public class ProductController {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        // Button click handler
-        btnPopup.setOnAction(event -> toggleAddProductForm());
     }
 
+    private void setupTableColumns() {
+        productImgColumn.setCellValueFactory(new PropertyValueFactory<>("productImage"));
+        productNameColumn.setCellValueFactory(new PropertyValueFactory<>("name"));
+        categoryColumn.setCellValueFactory(new PropertyValueFactory<>("category"));
+        costPriceColumn.setCellValueFactory(new PropertyValueFactory<>("costPrice"));
+        markupColumn.setCellValueFactory(new PropertyValueFactory<>("markupPercentage"));
+        sellingPriceColumn.setCellValueFactory(new PropertyValueFactory<>("sellingPrice"));
+        stocksColumn.setCellValueFactory(new PropertyValueFactory<>("stock"));
+        barcodeColumn.setCellValueFactory(new PropertyValueFactory<>("barcodeImage"));
+        actionColumn.setCellValueFactory(new PropertyValueFactory<>("actionButton"));
+    }
 
+    private void initializePagination(ObservableList<Product> productList) {
+        int itemsPerPage = 10;
+        int totalPages = (int) Math.ceil((double) productList.size() / itemsPerPage);
+
+        // Set page count for standard JavaFX Pagination
+        productTblPage.setPageCount(Math.max(1, totalPages));
+
+        // Set up page factory
+        productTblPage.setPageFactory(pageIndex -> {
+            updateTableForPage(productList, pageIndex, itemsPerPage);
+            return new Pane();
+        });
+    }
+
+    private void updateTableForPage(ObservableList<Product> productList, int pageIndex, int itemsPerPage) {
+        int fromIndex = pageIndex * itemsPerPage;
+        int toIndex = Math.min(fromIndex + itemsPerPage, productList.size());
+
+        if (fromIndex >= productList.size()) {
+            productTbl.setItems(FXCollections.emptyObservableList());
+        } else {
+            productTbl.setItems(FXCollections.observableArrayList(
+                    productList.subList(fromIndex, toIndex)
+            ));
+        }
+    }
+
+    // Method to refresh products table - can be called from other controllers
+    public void refreshProductTable() {
+        productLoadService.reloadProducts();
+    }
 
     private double getInitialYPosition() {
         // If manually set, use that value, otherwise auto-calculate

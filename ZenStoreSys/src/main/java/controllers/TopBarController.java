@@ -8,6 +8,8 @@ import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
+import services.ProductLoadService;
+
 import java.io.IOException;
 
 public class TopBarController {
@@ -35,6 +37,9 @@ public class TopBarController {
 
     private void loadProductsView() {
         try {
+            // Restart the ProductLoadService to refresh data
+            ProductLoadService.getInstance().reloadProducts();
+
             // Clear current content
             if (contentPane != null) {
                 contentPane.getChildren().clear();
