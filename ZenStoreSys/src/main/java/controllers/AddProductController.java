@@ -272,7 +272,7 @@ public class AddProductController {
                 showAlert(Alert.AlertType.INFORMATION, "Product added successfully!");
                 // Refresh the product table
                 if (productController != null) {
-                    productController.loadProductsTable();
+                    productController.refreshProductTable();
                 }
                 clearFields();
             } else {

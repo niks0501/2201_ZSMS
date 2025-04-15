@@ -2,7 +2,6 @@ package controllers;
 
 import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXComboBox;
-import io.github.palexdev.materialfx.controls.MFXPagination;
 import io.github.palexdev.materialfx.controls.MFXTextField;
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
@@ -21,6 +20,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import other_classes.ProductDAO;
+import services.ProductLoadService;
 import table_models.Product;
 
 import java.io.File;
@@ -34,9 +34,6 @@ public class ProductController {
 
     @FXML
     private TableColumn<Product, String> barcodeColumn;
-
-    @FXML
-    private MFXButton btnAddProduct;
 
     @FXML
     private Button btnPopup;
@@ -66,7 +63,7 @@ public class ProductController {
     private TableView<Product> productTbl;
 
     @FXML
-    private MFXPagination productTblPage;
+    private Pagination productTblPage;
 
     @FXML
     private MFXTextField searchFld;
@@ -87,6 +84,8 @@ public class ProductController {
     private boolean isFormVisible = false;
     private double initialYPosition = -1; // Default: auto-calculated
     private double finalYPosition = 250;    // Default: top of container
+    private ProductLoadService productLoadService;
+    private ObservableList<Product> allProducts;
 
     @FXML
     public void initialize() {
@@ -108,8 +107,24 @@ public class ProductController {
         // Set up table columns
         setupTableColumns();
 
-        // Load products into the table
-        loadProductsTable();
+        // Initialize product load service
+        productLoadService = ProductLoadService.getInstance();
+
+        // Set up service success handler
+        productLoadService.setOnSucceeded(event -> {
+            allProducts = productLoadService.getValue();
+            initializePagination(allProducts);
+        });
+
+        // Set up service failure handler
+        productLoadService.setOnFailed(event -> {
+            Throwable exception = productLoadService.getException();
+            System.err.println("Failed to load products: " + exception.getMessage());
+            // Display error to user if needed
+        });
+
+        // Start loading products
+        productLoadService.reloadProducts();
     }
 
     private void loadAddProductForm(){
@@ -146,11 +161,36 @@ public class ProductController {
         actionColumn.setCellValueFactory(new PropertyValueFactory<>("actionButton"));
     }
 
-    public void loadProductsTable() {
-        ObservableList<Product> productList = ProductDAO.getAllProducts();
-        productTbl.setItems(productList);
+    private void initializePagination(ObservableList<Product> productList) {
+        int itemsPerPage = 10;
+        int totalPages = (int) Math.ceil((double) productList.size() / itemsPerPage);
 
+        // Set page count for standard JavaFX Pagination
+        productTblPage.setPageCount(Math.max(1, totalPages));
 
+        // Set up page factory
+        productTblPage.setPageFactory(pageIndex -> {
+            updateTableForPage(productList, pageIndex, itemsPerPage);
+            return new Pane();
+        });
+    }
+
+    private void updateTableForPage(ObservableList<Product> productList, int pageIndex, int itemsPerPage) {
+        int fromIndex = pageIndex * itemsPerPage;
+        int toIndex = Math.min(fromIndex + itemsPerPage, productList.size());
+
+        if (fromIndex >= productList.size()) {
+            productTbl.setItems(FXCollections.emptyObservableList());
+        } else {
+            productTbl.setItems(FXCollections.observableArrayList(
+                    productList.subList(fromIndex, toIndex)
+            ));
+        }
+    }
+
+    // Method to refresh products table - can be called from other controllers
+    public void refreshProductTable() {
+        productLoadService.reloadProducts();
     }
 
     private double getInitialYPosition() {

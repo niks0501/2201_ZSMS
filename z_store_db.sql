@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 11, 2025 at 06:01 PM
+-- Generation Time: Apr 14, 2025 at 06:22 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -20,6 +20,54 @@ SET time_zone = "+00:00";
 --
 -- Database: `z_store_db`
 --
+
+DELIMITER $$
+--
+-- Procedures
+--
+CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllProducts` ()   BEGIN
+    SELECT
+        p.product_id,
+        p.image_path,
+        p.name,
+        c.category_name,
+        p.cost_price,
+        p.markup_percentage,
+        p.stock,
+        p.selling_price,
+        p.barcode_path
+    FROM
+        products p
+            JOIN
+        categories c ON p.category_id = c.category_id;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_insert_product` (IN `p_name` VARCHAR(255), IN `p_category_id` INT, IN `p_cost_price` DECIMAL(10,2), IN `p_markup_percentage` DECIMAL(10,2), IN `p_stock` INT, IN `p_selling_price` DECIMAL(10,2), IN `p_image_path` VARCHAR(255), OUT `p_product_id` INT)   BEGIN
+    INSERT INTO products (
+        name,
+        category_id,
+        cost_price,
+        markup_percentage,
+        stock,
+        selling_price,
+        image_path,
+        last_restock
+    )
+    VALUES (
+               p_name,
+               p_category_id,
+               p_cost_price,
+               p_markup_percentage,
+               p_stock,
+               p_selling_price,
+               IFNULL(p_image_path, ''),
+               NOW()
+           );
+
+    SET p_product_id = LAST_INSERT_ID();
+END$$
+
+DELIMITER ;
 
 -- --------------------------------------------------------
 
@@ -108,7 +156,16 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`product_id`, `image_path`, `name`, `category_id`, `cost_price`, `markup_percentage`, `stock`, `selling_price`, `barcode_path`, `last_restock`) VALUES
-(4, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744387202826.png', 'asdasdasdasd', 1, 120.00, 10.00, 10, 132.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_4.png', '2025-04-11 16:00:02');
+(2, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744444441957.png', 'fkenfjsdbfkjsbf', 1, 120.00, 10.00, 10, 132.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_2.png', '2025-04-12 07:54:01'),
+(3, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744446779975.png', 'zdfdxzx', 1, 120.00, 5.00, 12, 126.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_3.png', '2025-04-12 08:32:59'),
+(4, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744446942339.png', 'qasdfghjkl', 1, -9.00, 90.00, 13, -17.10, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_4.png', '2025-04-12 08:35:42'),
+(5, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744548726003.png', 'asdwdfdafASD', 1, 120.00, 10.00, 10, 132.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_5.png', '2025-04-13 12:52:06'),
+(8, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744620861667.png', 'Nikko', 1, 120.00, 10.00, 10, 132.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_8.png', '2025-04-14 08:54:21'),
+(9, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744638472320.png', 'dadadsdasdas', 1, 100.00, 10.00, 10, 110.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_9.png', '2025-04-14 13:47:52'),
+(10, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744647161056.png', 'weuiorhqwehpqwiond', 1, 20.00, 15.00, 10, 23.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_10.png', '2025-04-14 16:12:41'),
+(11, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744647260721.png', 'asd2asdasdasds', 1, 50.00, 5.00, 10, 52.50, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_11.png', '2025-04-14 16:14:20'),
+(12, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744647320897.png', 'blabala', 1, 500.00, 10.00, 10, 550.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_12.png', '2025-04-14 16:15:20'),
+(13, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744647487040.png', 'quiyroosdfoi', 1, 327.00, 20.00, 10, 392.40, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_13.png', '2025-04-14 16:18:07');
 
 -- --------------------------------------------------------
 
@@ -230,7 +287,7 @@ ALTER TABLE `low_stock_alerts`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `product_prices`
