@@ -7,8 +7,17 @@
     -fx-border-radius: 20px;
     -fx-border-color: #dddddd;
     -fx-border-width: 1px;
-    -fx-padding: 15px;
     -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.2, 0.1, 0);
+}
+
+#btnReloadTbl:hover{
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+
+#btnReloadTbl:pressed{
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
 }
 
 #searchFld {
@@ -16,13 +25,6 @@
     -fx-background-radius: 8px;     /* Ensures smooth rounding */
     -fx-border-color: green;      /* Slightly darker green border */
     -fx-border-width: 2px;
-}
-
-#searchFld .floating-text {
-    -fx-text-fill: -mfx-charcoal; /* Text color */
-    -fx-font-size: 16px;
-    -fx-font-family: "Open Sans";
-    -fx-font-weight: bold;
 }
 
 .pagination {
@@ -81,8 +83,6 @@
     -fx-scale-y: 1.05;
 }
 
-
-
 #sortTbl {
     -fx-border-radius: 8px;         /* Rounded edges */
     -fx-background-radius: 8px;     /* Ensures smooth rounding */
@@ -92,13 +92,13 @@
 
 #sortTbl .floating-text {
     -fx-text-fill: -mfx-charcoal; /* Text color */
-    -fx-font-size: 13px;
+    -fx-font-size: 14px;
     -fx-font-family: "Open Sans";
     -fx-font-weight: bold;
 }
 
 .mfx-combo-box-cell {
-  -mfx-main: -mfx-purple;
+  -mfx-main: -mfx-green;
   -mfx-hover: rgba(98, 0, 238, 0.1);
   -mfx-selected: rgba(98, 0, 238, 0.2);
   -fx-background-color: transparent;
@@ -122,11 +122,6 @@
 .mfx-combo-box:disabled .caret .mfx-font-icon {
   -mfx-color: -mfx-charcoal;
 }
-
-
-
-
-
 
 #btnAddProduct:hover {
     -fx-scale-x: 1.10;
@@ -196,6 +191,61 @@
 #btnPopup:pressed {
     -fx-scale-x: 0.95;
     -fx-scale-y: 0.95;
+}
+
+#searchFld .floating-text {
+    -fx-text-fill: -mfx-charcoal; /* Text color */
+    -fx-font-size: 14px;
+    -fx-font-family: "Open Sans";
+}
+
+/* Action buttons styling */
+.action-button {
+    -fx-background-color: transparent;
+    -fx-border-color: #81b29a;
+    -fx-border-width: 2px;
+    -fx-border-radius: 4px;
+    -fx-cursor: hand;
+}
+
+.action-button:hover {
+    -fx-background-color: rgba(129, 178, 154, 0.1);
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+    -fx-effect: dropshadow(gaussian, rgba(129, 178, 154, 0.3), 4, 0, 0, 1);
+}
+
+.action-button:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+    -fx-background-color: rgba(129, 178, 154, 0.2);
+}
+
+/* Context menu styling */
+.edit-context-menu {
+    -fx-background-color: white;
+    -fx-border-color: #81b29a;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 3);
+}
+
+.edit-context-menu .menu-item {
+    -fx-background-radius: 3px;
+}
+
+.edit-context-menu .menu-item:focused {
+    -fx-background-color: #81b29a;
+}
+
+.edit-context-menu .menu-item:focused .label {
+    -fx-text-fill: white;
+}
+
+.edit-context-menu .menu-item .label {
+    -fx-text-fill: #333333;
+    -fx-font-size: 13px;
 }
 
 

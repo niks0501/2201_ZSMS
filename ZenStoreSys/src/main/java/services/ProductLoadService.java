@@ -34,7 +34,13 @@ public class ProductLoadService extends Service<ObservableList<Product>> {
             @Override
             protected ObservableList<Product> call() {
                 // Load products in background thread
-                return ProductDAO.getAllProducts();
+                ObservableList<Product> products = ProductDAO.getAllProducts();
+
+                // Sort products by ID in descending order to show newest first
+                FXCollections.sort(products, (p1, p2) ->
+                        Integer.compare(p2.getProductId(), p1.getProductId()));
+
+                return products;
             }
         };
     }

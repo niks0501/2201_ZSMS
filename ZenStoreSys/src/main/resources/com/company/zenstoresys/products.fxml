@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import io.github.palexdev.materialfx.controls.MFXButton?>
 <?import io.github.palexdev.materialfx.controls.MFXComboBox?>
 <?import io.github.palexdev.materialfx.controls.MFXTextField?>
 <?import java.lang.String?>
@@ -33,7 +34,7 @@
                         <Font name="Source Sans 3 SemiBold" size="16.0" />
                      </font>
                   </Label>
-                  <TableView id="productTbl" fx:id="productTbl" layoutX="25.0" layoutY="106.0" prefHeight="420.0" prefWidth="1002.0">
+                  <TableView id="productTbl" fx:id="productTbl" layoutX="25.0" layoutY="106.0" maxWidth="991.0" minWidth="991.0" prefHeight="420.0" prefWidth="991.0">
                     <columns>
                       <TableColumn id="productImgColumn" fx:id="productImgColumn" prefWidth="152.0" text="Product Image" />
                       <TableColumn id="productNameColumn" fx:id="productNameColumn" prefWidth="185.0" text="Name" />
@@ -42,27 +43,40 @@
                         <TableColumn id="markupColumn" fx:id="markupColumn" prefWidth="88.0" text="Markup %" visible="false" />
                         <TableColumn id="stocksColumn" fx:id="stocksColumn" prefWidth="83.0" text="Stocks" />
                         <TableColumn id="sellingPriceColumn" fx:id="sellingPriceColumn" prefWidth="109.0" text="Selling Price" />
-                        <TableColumn id="barcodeColumn" fx:id="barcodeColumn" prefWidth="194.0" text="Barcode" />
-                        <TableColumn fx:id="actionColumn" minWidth="9.0" prefWidth="116.0" text="Actions" />
+                        <TableColumn id="barcodeColumn" fx:id="barcodeColumn" prefWidth="138.0" text="Barcode" />
+                        <TableColumn fx:id="actionColumn" minWidth="9.0" prefWidth="162.0" resizable="false" text="Actions" />
                     </columns>
                   </TableView>
-                  <MFXComboBox id="sortTbl" fx:id="sortTbl" floatMode="BORDER" floatingText="Sort" layoutX="899.0" layoutY="79.0" minHeight="0.0" minWidth="0.0" prefHeight="25.0" prefWidth="122.0" styleClass="mfx-combo-box" />
-                  <ImageView fitHeight="36.0" fitWidth="36.0" layoutX="310.0" layoutY="65.0" pickOnBounds="true" preserveRatio="true">
+                  <MFXComboBox id="sortTbl" fx:id="sortTbl" floatMode="BORDER" floatingText="Sort" layoutX="868.0" layoutY="69.0" minHeight="0.0" minWidth="0.0" prefHeight="29.0" prefWidth="153.0">
+                     <styleClass>
+                        <String fx:value="mfx-combo-box" />
+                        <String fx:value="mfx-combo-box-cell" />
+                     </styleClass></MFXComboBox>
+                  <ImageView fitHeight="36.0" fitWidth="36.0" layoutX="320.0" layoutY="65.0" pickOnBounds="true" preserveRatio="true">
                      <image>
                         <Image url="@../../../img/google.png" />
                      </image>
                   </ImageView>
-                  <ImageView fitHeight="25.0" fitWidth="23.0" layoutX="876.0" layoutY="83.0" pickOnBounds="true" preserveRatio="true">
+                  <ImageView fitHeight="25.0" fitWidth="23.0" layoutX="845.0" layoutY="72.0" pickOnBounds="true" preserveRatio="true">
                      <image>
                         <Image url="@../../../img/filter%20(1).png" />
                      </image>
                   </ImageView>
-                  <MFXTextField id="searchFld" fx:id="searchFld" floatMode="BORDER" floatingText="Search" graphicTextGap="5.0" layoutX="346.0" layoutY="75.0" minHeight="0.0" minWidth="0.0" prefHeight="32.0" prefWidth="328.0">
+                  <MFXTextField id="searchFld" fx:id="searchFld" floatMode="BORDER" floatingText="Search" graphicTextGap="5.0" layoutX="356.0" layoutY="67.0" minHeight="0.0" minWidth="0.0" prefHeight="32.0" prefWidth="328.0">
                      <font>
                         <Font name="Open Sans Regular" size="14.0" />
                      </font>
                   </MFXTextField>
                   <Pagination fx:id="productTblPage" layoutX="344.0" layoutY="526.0" pageCount="10" prefHeight="44.0" prefWidth="365.0" />
+                  <MFXButton id="btnReloadTbl" fx:id="btnReloadTbl" buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" depthLevel="LEVEL1" layoutX="34.0" layoutY="77.0" prefHeight="29.0" prefWidth="44.0" style="-fx-background-color: transparent;">
+                     <graphic>
+                        <ImageView fitHeight="21.0" fitWidth="22.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../img/reload.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </MFXButton>
                </children>
             </Pane>
             <Button id="btnPopup" fx:id="btnPopup" contentDisplay="GRAPHIC_ONLY" layoutX="494.0" layoutY="615.0" mnemonicParsing="false" prefHeight="34.0" prefWidth="92.0" style="-fx-background-color: #81b29a;" text="Button">

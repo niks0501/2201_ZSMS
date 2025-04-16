@@ -105,4 +105,20 @@ public class ProductDAO {
 
         return products;
     }
+
+    // Add this method to ProductDAO class
+    public static Integer getCategoryIdByName(String categoryName) {
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT category_id FROM categories WHERE category_name = ?")) {
+            stmt.setString(1, categoryName);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt("category_id");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

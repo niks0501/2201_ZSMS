@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.palexdev.materialfx.controls.MFXButton?>
+<?import io.github.palexdev.materialfx.controls.MFXTextField?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.shape.Line?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane fx:id="categoryManeFrame" prefHeight="450.0" prefWidth="576.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.CategoryController">
+   <children>
+      <TableView id="categoryTbl" fx:id="categoryTbl" layoutX="22.0" layoutY="170.0" prefHeight="257.0" prefWidth="551.0">
+        <columns>
+          <TableColumn fx:id="categoryIdColumn" prefWidth="66.0" text="ID" />
+          <TableColumn fx:id="categoryNameColumn" prefWidth="346.0" text="Product Categories" />
+            <TableColumn fx:id="actionsColumn" minWidth="0.0" prefWidth="137.0" text="Actions" />
+        </columns>
+      </TableView>
+      <Label id="productsLabel" alignment="CENTER" layoutX="128.0" layoutY="49.0" prefHeight="48.0" prefWidth="345.0" text="Products Category" textAlignment="CENTER">
+         <font>
+            <Font name="Inter 18pt ExtraBold" size="30.0" />
+         </font>
+         <graphic>
+            <ImageView fitHeight="44.0" fitWidth="50.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/function.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Label>
+      <Pane fx:id="barPane" layoutY="-7.0" prefHeight="43.0" prefWidth="594.0" style="-fx-background-color: #262626;">
+         <children>
+            <Label layoutX="169.0" layoutY="14.0" text="ZSariSmart Management System" textAlignment="CENTER" textFill="WHITE">
+               <font>
+                  <Font name="Inter 18pt Bold" size="16.0" />
+               </font>
+            </Label>
+            <Label layoutY="11.0" text="Category" textAlignment="CENTER" textFill="WHITE">
+               <graphic>
+                  <ImageView fitHeight="25.0" fitWidth="27.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../img/function.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <font>
+                  <Font name="Inter 18pt Bold" size="15.0" />
+               </font>
+            </Label>
+            <MFXButton fx:id="btnExit" contentDisplay="GRAPHIC_ONLY" layoutX="566.0" layoutY="11.0" prefHeight="16.0" prefWidth="18.0" rippleAnimateBackground="false" rippleAnimationSpeed="0.0" rippleBackgroundOpacity="0.0" rippleRadius="0.0" rippleRadiusMultiplier="0.0" style="-fx-background-color: transparent;">
+               <graphic>
+                  <Circle fill="#ff1f1f" radius="6.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" />
+               </graphic>
+            </MFXButton>
+            <MFXButton fx:id="btnMinimize" computeRadiusMultiplier="false" contentDisplay="GRAPHIC_ONLY" layoutX="545.0" layoutY="11.0" prefHeight="16.0" prefWidth="18.0" rippleAnimateBackground="false" rippleAnimationSpeed="0.0" rippleBackgroundOpacity="0.0" rippleColor="#a39595ec" rippleRadius="0.0" rippleRadiusMultiplier="0.0" style="-fx-background-color: transparent;">
+               <graphic>
+                  <Circle fill="#1fff52" radius="6.0" stroke="BLACK" strokeType="INSIDE" strokeWidth="0.0" />
+               </graphic>
+            </MFXButton>
+         </children>
+      </Pane>
+      <Line endX="40.0" layoutX="53.0" layoutY="73.0" startX="-48.0" stroke="#82b29b" strokeWidth="10.0" />
+      <MFXTextField id="categoryNameFld" fx:id="categoryNameFld" floatMode="BORDER" floatingText="Category Name" layoutX="29.0" layoutY="126.0" minHeight="0.0" minWidth="0.0" prefHeight="35.0" prefWidth="218.0">
+         <font>
+            <Font name="JetBrains Mono Regular" size="14.0" />
+         </font>
+      </MFXTextField>
+      <MFXButton id="btnAddCategory" fx:id="btnAddCategory" contentDisplay="GRAPHIC_ONLY" layoutX="247.0" layoutY="131.0" prefHeight="20.0" prefWidth="28.0" rippleColor="WHITE" style="-fx-background-color: transparent;">
+         <graphic>
+            <ImageView fitHeight="18.0" fitWidth="18.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/plus.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </MFXButton>
+   </children>
+</AnchorPane>
