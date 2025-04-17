@@ -2,6 +2,8 @@ package controllers;
 
 import io.github.palexdev.materialfx.controls.MFXButton;
 import io.github.palexdev.materialfx.controls.MFXTextField;
+import io.github.palexdev.materialfx.controls.MFXToggleButton;
+import javafx.animation.FadeTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -14,7 +16,9 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 import other_classes.DBConnect;
 import table_models.Category;
 
@@ -26,7 +30,7 @@ public class CategoryController {
     private TableColumn<Category, Void> actionsColumn;
 
     @FXML
-    Pane barPane;
+    public Pane barPane;
 
     @FXML
     private MFXButton btnAddCategory;
@@ -52,6 +56,9 @@ public class CategoryController {
     @FXML
     private TableView<Category> categoryTbl;
 
+    @FXML
+    private MFXToggleButton btnToggleSearch;
+
     private final ObservableList<Category> categoryList = FXCollections.observableArrayList();
 
     @FXML
@@ -69,6 +76,70 @@ public class CategoryController {
 
         // Set up add category button
         btnAddCategory.setOnAction(e -> addCategory());
+
+        // Set up the toggle search button functionality
+        setupToggleSearch();
+    }
+
+    private void setupToggleSearch() {
+        // Create the search text field using standard JavaFX TextField
+        TextField searchField = new TextField();
+        searchField.setPromptText("Search Categories");
+        searchField.setPrefWidth(categoryNameColumn.getWidth() - 10);
+        searchField.setStyle("-fx-border-color: #81b29a; -fx-border-radius: 8px; -fx-background-radius: 8px;");
+
+        // Store the original header text
+        String originalHeaderText = categoryNameColumn.getText();
+
+        // Initially use just the column text (no graphic)
+        categoryNameColumn.setGraphic(null);
+
+        // Set up toggle button listener
+        btnToggleSearch.selectedProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal) {
+                // When toggled on, set the search field as the graphic and clear the text
+                categoryNameColumn.setGraphic(searchField);
+                categoryNameColumn.setText(""); // Clear the text to avoid duplication
+                searchField.setPromptText("Search Categories");
+            } else {
+                // When toggled off, restore original text and remove graphic
+                categoryNameColumn.setText(originalHeaderText);
+                categoryNameColumn.setGraphic(null);
+                searchField.clear();
+                loadCategories();
+            }
+        });
+
+        // Set up real-time filtering as user types
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> {
+            filterCategories(newVal);
+        });
+
+        // Add listener to adjust width of search field when column resizes
+        categoryNameColumn.widthProperty().addListener((obs, old, newWidth) -> {
+            searchField.setPrefWidth(newWidth.doubleValue() - 10);
+        });
+    }
+
+    private void filterCategories(String searchText) {
+        if (searchText == null || searchText.isEmpty()) {
+            // Show all categories if search is empty
+            categoryTbl.setItems(categoryList);
+            return;
+        }
+
+        // Create filtered list based on search text
+        ObservableList<Category> filteredList = FXCollections.observableArrayList();
+        String lowerCaseFilter = searchText.toLowerCase();
+
+        for (Category category : categoryList) {
+            if (category.getName().toLowerCase().contains(lowerCaseFilter)) {
+                filteredList.add(category);
+            }
+        }
+
+        // Update the table with filtered results
+        categoryTbl.setItems(filteredList);
     }
 
     private void setUpColumns() {
@@ -194,31 +265,14 @@ public class CategoryController {
 
             if (success) {
                 categoryNameFld.clear();
-
-                showAlert(Alert.AlertType.INFORMATION, "Category added successfully");
+                showNotification("Category added successfully");
                 loadCategories();
-
             } else {
                 showAlert(Alert.AlertType.ERROR, "Category name already exists");
             }
-
-
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Error adding category: " + e.getMessage());
         }
-    }
-
-    private void editCategory(Category category) {
-        categoryNameFld.setText(category.getName());
-        btnAddCategory.setText("Update");
-
-        // Change button action temporarily
-        btnAddCategory.setOnAction(e -> {
-            updateCategory(category.getId(), categoryNameFld.getText().trim());
-            btnAddCategory.setText("Add Category");
-            btnAddCategory.setOnAction(ev -> addCategory());
-            categoryNameFld.clear();
-        });
     }
 
     private void updateCategory(int categoryId, String newName) {
@@ -239,11 +293,10 @@ public class CategoryController {
 
             if (success) {
                 loadCategories();
-                showAlert(Alert.AlertType.INFORMATION, "Category updated successfully");
+                showNotification("Category updated successfully");
             } else {
                 showAlert(Alert.AlertType.ERROR, "Category name already exists or not found");
             }
-
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Error updating category: " + e.getMessage());
         }
@@ -268,12 +321,11 @@ public class CategoryController {
 
                     if (success) {
                         loadCategories();
-                        showAlert(Alert.AlertType.INFORMATION, "Category deleted successfully");
+                        showNotification("Category deleted successfully");
                     } else {
                         showAlert(Alert.AlertType.ERROR,
                                 "Cannot delete category because it is used by existing products");
                     }
-
                 } catch (SQLException e) {
                     showAlert(Alert.AlertType.ERROR, "Error deleting category: " + e.getMessage());
                 }
@@ -287,5 +339,48 @@ public class CategoryController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    public void showNotification(String message) {
+        // Create notification pane
+        Pane notification = new Pane();
+        notification.setStyle(
+                "-fx-background-color: #81b29a;" +
+                        "-fx-background-radius: 5px;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 3);"
+        );
+
+        // Add notification text
+        Label label = new Label(message);
+        label.setStyle(
+                "-fx-text-fill: white;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-padding: 10px;"
+        );
+
+        // Size and position the elements
+        notification.getChildren().add(label);
+        double notificationWidth = 220;
+        double notificationHeight = 40;
+
+        label.setPrefWidth(notificationWidth);
+        label.setPrefHeight(notificationHeight);
+        label.setAlignment(Pos.CENTER);
+
+        notification.setPrefWidth(notificationWidth);
+        notification.setPrefHeight(notificationHeight);
+        notification.setLayoutX(categoryManeFrame.getWidth() - notificationWidth - 20);
+        notification.setLayoutY(categoryManeFrame.getHeight() - notificationHeight - 20);
+
+        // Add to scene and animate
+        categoryManeFrame.getChildren().add(notification);
+
+        FadeTransition fadeOut = new FadeTransition(Duration.seconds(2.5), notification);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+        fadeOut.setDelay(Duration.seconds(1.5));
+        fadeOut.setOnFinished(e -> categoryManeFrame.getChildren().remove(notification));
+        fadeOut.play();
     }
 }

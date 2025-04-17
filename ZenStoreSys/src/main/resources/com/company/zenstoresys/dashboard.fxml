@@ -13,7 +13,7 @@
 
 <StackPane prefHeight="720.0" prefWidth="1080.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.DashboardController">
    <children>
-      <AnchorPane prefHeight="720.0" prefWidth="1080.0" style="-fx-background-color: #F5EBE0;">
+      <AnchorPane fx:id="mainF" prefHeight="720.0" prefWidth="1080.0" style="-fx-background-color: #F5EBE0;">
          <children>
             <StackPane fx:id="contentPane" layoutY="74.0" prefHeight="645.0" prefWidth="1080.0" />
             <Pane fx:id="barPane" prefHeight="43.0" prefWidth="1080.0" style="-fx-background-color: #262626;">

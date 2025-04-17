@@ -85,6 +85,8 @@ public class ProductController {
     @FXML
     private MFXButton btnReloadTbl;
 
+    private String tempImagePath;
+
     private Parent addProductForm;
     private boolean isFormVisible = false;
     private final double initialYPosition = -1; // Default: auto-calculated
@@ -141,6 +143,8 @@ public class ProductController {
         setupSearchField();
 
         setupSortComboBox();
+
+        productTbl.setUserData(this);
     }
 
     private void setupSortComboBox() {
@@ -431,6 +435,12 @@ public class ProductController {
             isFormVisible = false;
         });
         parallelTransition.play();
+    }
+
+    // Add method to show/hide columns
+    public void showHiddenColumns(boolean show) {
+        costPriceColumn.setVisible(show);
+        markupColumn.setVisible(show);
     }
 
 }

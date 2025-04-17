@@ -8,10 +8,12 @@ import io.github.palexdev.materialfx.controls.models.spinner.*;
 import javafx.animation.FadeTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.DialogPane;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
@@ -394,7 +396,8 @@ public class AddProductController {
                 String barcodePath = ProductUtils.generateBarcode(productId);
                 ProductDAO.updateBarcodePath(productId, barcodePath);
 
-                showAlert(Alert.AlertType.INFORMATION, "Product added successfully!");
+                // Show notification instead of alert
+                showNotification("Product added successfully!");
                 // Refresh the product table
                 if (productController != null) {
                     productController.refreshProductTable();
@@ -429,6 +432,49 @@ public class AddProductController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    public void showNotification(String message) {
+        // Create notification pane
+        Pane notification = new Pane();
+        notification.setStyle(
+                "-fx-background-color: #81b29a;" +
+                        "-fx-background-radius: 5px;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 3);"
+        );
+
+        // Add notification text
+        Label label = new Label(message);
+        label.setStyle(
+                "-fx-text-fill: white;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-padding: 10px;"
+        );
+
+        // Size and position the elements
+        notification.getChildren().add(label);
+        double notificationWidth = 220;
+        double notificationHeight = 40;
+
+        label.setPrefWidth(notificationWidth);
+        label.setPrefHeight(notificationHeight);
+        label.setAlignment(Pos.CENTER);
+
+        notification.setPrefWidth(notificationWidth);
+        notification.setPrefHeight(notificationHeight);
+        notification.setLayoutX(addMPane.getWidth() - notificationWidth - 20);
+        notification.setLayoutY(addMPane.getHeight() - notificationHeight - 270);
+
+        // Add to scene and animate
+        addMPane.getChildren().add(notification);
+
+        FadeTransition fadeOut = new FadeTransition(Duration.seconds(2.5), notification);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+        fadeOut.setDelay(Duration.seconds(1.5));
+        fadeOut.setOnFinished(e -> addMPane.getChildren().remove(notification));
+        fadeOut.play();
     }
 
 }

@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
@@ -32,6 +33,9 @@ public class DashboardController {
 
     @FXML
     public StackPane contentPane;
+
+    @FXML
+    private AnchorPane mainF;
 
     private double xOffset = 0;
     private double yOffset = 0;
