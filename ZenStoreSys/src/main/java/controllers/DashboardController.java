@@ -116,12 +116,12 @@ public class DashboardController {
      */
     private void hideNavigationPane() {
         // Create slide-up animation
-        TranslateTransition slideUp = new TranslateTransition(Duration.millis(500), navigationPane);
+        TranslateTransition slideUp = new TranslateTransition(Duration.millis(200), navigationPane);
         slideUp.setToY(-navigationPane.getHeight());
         slideUp.setInterpolator(Interpolator.EASE_OUT);
 
         // Create fade-out animation
-        FadeTransition fadeOut = new FadeTransition(Duration.millis(250), navigationPane);
+        FadeTransition fadeOut = new FadeTransition(Duration.millis(150), navigationPane);
         fadeOut.setFromValue(1.0);
         fadeOut.setToValue(0.0);
 
@@ -141,13 +141,13 @@ public class DashboardController {
             navigationPane.setOpacity(0); // Start fully transparent
 
             // Create slide down transition
-            TranslateTransition slideDown = new TranslateTransition(Duration.millis(150), navigationPane);
+            TranslateTransition slideDown = new TranslateTransition(Duration.millis(200), navigationPane);
             slideDown.setFromY(-navigationPane.getPrefHeight());
             slideDown.setToY(0);
             slideDown.setInterpolator(Interpolator.EASE_OUT);
 
             // Create fade in transition
-            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), navigationPane);
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(150), navigationPane);
             fadeIn.setFromValue(0);
             fadeIn.setToValue(1);
             fadeIn.setInterpolator(Interpolator.EASE_BOTH);

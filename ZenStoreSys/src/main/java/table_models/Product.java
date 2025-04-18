@@ -684,9 +684,26 @@ public class Product {
 
                                         // Delete old image if it exists
                                         if (currentProduct.getImagePath() != null && !currentProduct.getImagePath().isEmpty()) {
-                                            File oldFile = new File(currentProduct.getImagePath());
-                                            if (oldFile.exists()) {
-                                                oldFile.delete();
+                                            try {
+                                                File oldFile = new File(currentProduct.getImagePath());
+                                                if (oldFile.exists()) {
+                                                    // Release any resources that might hold the file
+                                                    System.gc();
+
+                                                    // Try to delete using Files API which has better error handling
+                                                    boolean deleted = Files.deleteIfExists(oldFile.toPath());
+
+                                                    if (deleted) {
+                                                        System.out.println("Old product image deleted: " + oldFile.getAbsolutePath());
+                                                    } else {
+                                                        System.out.println("Failed to delete old image: " + oldFile.getAbsolutePath());
+                                                    }
+                                                } else {
+                                                    System.out.println("Old image file not found at path: " + currentProduct.getImagePath());
+                                                }
+                                            } catch (IOException ex) {
+                                                System.err.println("Error deleting old image: " + ex.getMessage());
+                                                // Continue with the new image even if old deletion fails
                                             }
                                         }
 

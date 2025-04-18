@@ -535,7 +535,7 @@ public class AddProductController {
         costPriceFld.clear();
         markupFld.clear();
         sellingPriceFld.clear();
-        stocksSpinner.setValue(0);
+        stocksSpinner.setValue(10);
         productPic.setImage(null);
         selectedImageFile = null;
     }

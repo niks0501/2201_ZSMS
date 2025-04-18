@@ -48,18 +48,20 @@ public class ProductLoadService extends Service<ObservableList<Product>> {
 
     // Method to restart the service
     public void reloadProducts() {
-        if (getState() == State.RUNNING) {
-            // If already running, wait for it to complete
+        // First check we're on the JavaFX thread
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(this::reloadProducts);
             return;
         }
 
-        // Reset if in succeeded or failed state
-        if (getState() == State.SUCCEEDED || getState() == State.FAILED) {
-            reset();
+        // If already running, don't start again
+        if (isRunning()) {
+            return;
         }
 
-        // Start loading data
-        restart();
+        // Reset service before restarting
+        reset();
+        start();
     }
 
     // Method to load products after UI is ready

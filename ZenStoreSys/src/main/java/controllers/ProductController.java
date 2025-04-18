@@ -120,30 +120,31 @@ public class ProductController {
         // Initialize product load service
         productLoadService = ProductLoadService.getInstance();
 
-        // Set up service success handler
-        productLoadService.setOnSucceeded(event -> {
-            allProducts = productLoadService.getValue();
-            // Initialize filteredProducts with all products
-            filteredProducts.clear();
-            filteredProducts.addAll(allProducts);
-            initializePagination(filteredProducts);
-        });
+        // All service-related operations MUST happen on JavaFX thread
+        Platform.runLater(() -> {
+            // Set up service success handler
+            productLoadService.setOnSucceeded(event -> {
+                allProducts = productLoadService.getValue();
+                filteredProducts.clear();
+                filteredProducts.addAll(allProducts);
+                initializePagination(filteredProducts);
+            });
 
-        // Set up service failure handler
-        productLoadService.setOnFailed(event -> {
-            Throwable exception = productLoadService.getException();
-            System.err.println("Failed to load products: " + exception.getMessage());
-            // Display error to user if needed
-        });
+            // Set up service failure handler
+            productLoadService.setOnFailed(event -> {
+                Throwable exception = productLoadService.getException();
+                System.err.println("Failed to load products: " + exception.getMessage());
+            });
 
-        // Start loading products AFTER UI is fully loaded
-        Platform.runLater(() -> productLoadService.reloadProducts());
+            // Only start the service if it's not already running
+            if (!productLoadService.isRunning()) {
+                productLoadService.reloadProducts();
+            }
+        });
 
         // Set up search field listener
         setupSearchField();
-
         setupSortComboBox();
-
         productTbl.setUserData(this);
     }
 
@@ -338,13 +339,18 @@ public class ProductController {
     public void refreshProductTable() {
         SortOption currentSort = sortTbl.getValue();
 
-        productLoadService.reloadProducts();
-        productLoadService.setOnSucceeded(event -> {
-            allProducts = productLoadService.getValue();
-            if (currentSort != null) {
-                applySortFilter(currentSort);
-            } else {
-                filterProducts(searchFld.getText());
+        Platform.runLater(() -> {
+            productLoadService.setOnSucceeded(event -> {
+                allProducts = productLoadService.getValue();
+                if (currentSort != null) {
+                    applySortFilter(currentSort);
+                } else {
+                    filterProducts(searchFld.getText());
+                }
+            });
+
+            if (!productLoadService.isRunning()) {
+                productLoadService.reloadProducts();
             }
         });
     }
