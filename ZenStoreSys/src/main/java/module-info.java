@@ -7,6 +7,9 @@ module com.company.zenstoresys {
     requires java.sql;
     requires com.google.zxing.javase;
     requires com.google.zxing;
+    requires webcam.capture;
+    requires org.slf4j;
+    requires org.slf4j.nop;
 
 
     opens controllers to javafx.fxml;

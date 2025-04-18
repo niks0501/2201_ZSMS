@@ -2,9 +2,12 @@ package controllers;
 
 import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
@@ -22,12 +25,44 @@ public class TopBarController {
 
     private StackPane contentPane;
 
+    private volatile boolean isLoading = false; // Track loading state
+
 
 
     @FXML
     private void initialize() {
         // Add event handler for product button
         btnProduct.setOnAction(event -> loadProductsView());
+
+        // Set up ProductLoadService handlers once and for all
+        ProductLoadService productService = ProductLoadService.getInstance();
+
+        // This listener ensures button state matches service state automatically
+        productService.runningProperty().addListener((obs, wasRunning, isNowRunning) -> {
+            Platform.runLater(() -> btnProduct.setDisable(isNowRunning));
+        });
+
+        // Set up permanent service handlers
+        productService.setOnSucceeded(event -> {
+            if (contentPane != null && !contentPane.getChildren().isEmpty()) {
+                // Find the view to fade in
+                contentPane.getChildren().stream()
+                        .filter(node -> node instanceof StackPane)
+                        .findFirst()
+                        .ifPresent(view -> {
+                            FadeTransition fadeIn = new FadeTransition(Duration.millis(400), view);
+                            fadeIn.setFromValue(0);
+                            fadeIn.setToValue(1);
+                            fadeIn.setInterpolator(Interpolator.EASE_BOTH);
+                            fadeIn.play();
+                        });
+            }
+            isLoading = false;
+        });
+
+        productService.setOnFailed(event -> {
+            isLoading = false;
+        });
     }
 
     // Method to set the contentPane from DashboardController
@@ -36,36 +71,60 @@ public class TopBarController {
     }
 
     private void loadProductsView() {
-        try {
-            // Restart the ProductLoadService to refresh data
-            ProductLoadService.getInstance().reloadProducts();
+        // Prevent multiple concurrent loading operations
+        if (isLoading) {
+            return;
+        }
 
-            // Clear current content
-            if (contentPane != null) {
-                contentPane.getChildren().clear();
+        isLoading = true;
+        btnProduct.setDisable(true);
 
-                // Load products FXML
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/company/zenstoresys/products.fxml"));
-                StackPane productsView = loader.load();
+        // Show loading indicator
+        ProgressIndicator loadingIndicator = new ProgressIndicator();
+        loadingIndicator.setMaxSize(100, 100);
 
-                // Apply CSS
-                productsView.getStylesheets().add(getClass().getResource("/css/products.css").toExternalForm());
+        if (contentPane != null) {
+            contentPane.getChildren().clear();
+            contentPane.getChildren().add(loadingIndicator);
 
-                // Set initial opacity for animation
-                productsView.setOpacity(0);
+            // Load FXML in background thread
+            Thread loaderThread = new Thread(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/company/zenstoresys/products.fxml"));
+                    StackPane productsView = loader.load();
+                    productsView.getStylesheets().add(getClass().getResource("/css/products.css").toExternalForm());
 
-                // Add to contentPane
-                contentPane.getChildren().add(productsView);
+                    // Update UI on JavaFX thread when ready
+                    Platform.runLater(() -> {
+                        contentPane.getChildren().clear();
+                        productsView.setOpacity(0);
+                        contentPane.getChildren().add(productsView);
 
-                // Create and play fade-in animation
-                FadeTransition fadeIn = new FadeTransition(Duration.millis(400), productsView);
-                fadeIn.setFromValue(0);
-                fadeIn.setToValue(1);
-                fadeIn.setInterpolator(Interpolator.EASE_BOTH);
-                fadeIn.play();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
+                        // Just fade in the view immediately
+                        FadeTransition fadeIn = new FadeTransition(Duration.millis(200), productsView);
+                        fadeIn.setFromValue(0);
+                        fadeIn.setToValue(1);
+                        fadeIn.setInterpolator(Interpolator.EASE_BOTH);
+                        fadeIn.setOnFinished(e -> {
+                            isLoading = false;
+                            btnProduct.setDisable(false);
+                        });
+                        fadeIn.play();
+                    });
+                } catch (IOException e) {
+                    Platform.runLater(() -> {
+                        contentPane.getChildren().clear();
+                        Label errorLabel = new Label("Error loading content: " + e.getMessage());
+                        contentPane.getChildren().add(errorLabel);
+                        isLoading = false;
+                        btnProduct.setDisable(false);
+                    });
+                    e.printStackTrace();
+                }
+            });
+
+            loaderThread.setDaemon(true);
+            loaderThread.start();
         }
     }
 }

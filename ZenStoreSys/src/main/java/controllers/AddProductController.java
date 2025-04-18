@@ -5,20 +5,36 @@ import io.github.palexdev.materialfx.controls.MFXComboBox;
 import io.github.palexdev.materialfx.controls.MFXSpinner;
 import io.github.palexdev.materialfx.controls.MFXTextField;
 import io.github.palexdev.materialfx.controls.models.spinner.*;
+import io.github.palexdev.materialfx.utils.SwingFXUtils;
+import javafx.animation.FadeTransition;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.DialogPane;
+import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.util.Duration;
 import other_classes.ProductDAO;
 import table_models.Category;
 import utils.ProductUtils;
 
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.IOException;
 
 public class AddProductController {
 
@@ -68,6 +84,9 @@ public class AddProductController {
 
     private ProductController productController;
 
+    private double xOffset = 0;
+    private double yOffset = 0;
+
 
     @FXML
     public void initialize() {
@@ -83,6 +102,7 @@ public class AddProductController {
         btnAddProduct.setOnAction(e -> addProduct());
         btnPic.setOnAction(e -> captureImage());
         btnImport.setOnAction(e -> importImage());
+        btnEditCategory.setOnAction(e -> openCategoryManager());
 
         // Initialize the spinner model with IntegerSpinnerModel
         IntegerSpinnerModel spinnerModel = new IntegerSpinnerModel(10);
@@ -91,7 +111,117 @@ public class AddProductController {
 
     }
 
+    private void openCategoryManager() {
+        try {
+            // Load the FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/modals/product-category.fxml"));
+            javafx.scene.layout.Region root = loader.load();
+            CategoryController controller = loader.getController();
+
+            // Apply CSS
+            root.getStylesheets().add(getClass().getResource("/css/product-category.css").toExternalForm());
+
+            // Create transparent scene
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+
+            // Create stage with transparent style
+            Stage stage = new Stage();
+            stage.initStyle(StageStyle.TRANSPARENT);
+            stage.setScene(scene);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(addMPane.getScene().getWindow());
+
+            // Apply rounded corners to entire window with depth effect
+            Rectangle clip = new Rectangle(root.getPrefWidth(), root.getPrefHeight());
+            clip.setArcWidth(20);
+            clip.setArcHeight(20);
+            root.setClip(clip);
+
+            // Add outer drop shadow for depth effect that follows the rounded corners
+            javafx.scene.effect.DropShadow dropShadow = new javafx.scene.effect.DropShadow();
+            dropShadow.setRadius(15);
+            dropShadow.setSpread(0.05);
+            dropShadow.setOffsetX(0);
+            dropShadow.setOffsetY(3);
+            dropShadow.setColor(Color.rgb(0, 0, 0, 0.3));
+
+            // Add background panel to receive shadow (slightly smaller than root)
+            AnchorPane shadowReceiver = new AnchorPane();
+            shadowReceiver.setStyle("-fx-background-color: white; -fx-background-radius: 20;");
+            shadowReceiver.setPrefSize(root.getPrefWidth() - 2, root.getPrefHeight() - 2);
+            shadowReceiver.setEffect(dropShadow);
+
+            // Place shadow receiver behind content
+            AnchorPane.setTopAnchor(shadowReceiver, 1.0);
+            AnchorPane.setLeftAnchor(shadowReceiver, 1.0);
+            AnchorPane.setRightAnchor(shadowReceiver, 1.0);
+            AnchorPane.setBottomAnchor(shadowReceiver, 1.0);
+
+            // Add shadow receiver at index 0 (behind other content)
+            ((AnchorPane)root).getChildren().add(0, shadowReceiver);
+
+
+
+            // Add subtle inner shadow to barPane for depth perception
+            javafx.scene.effect.InnerShadow innerShadow = new javafx.scene.effect.InnerShadow();
+            innerShadow.setRadius(2);
+            innerShadow.setChoke(0.1);
+            innerShadow.setOffsetY(1);
+            innerShadow.setColor(Color.rgb(0, 0, 0, 0.1));
+            controller.barPane.setEffect(innerShadow);
+
+            // Update clip size when window is resized
+            root.layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
+                clip.setWidth(newValue.getWidth());
+                clip.setHeight(newValue.getHeight());
+                shadowReceiver.setPrefSize(newValue.getWidth() - 2, newValue.getHeight() - 2);
+            });
+
+            // Set up for fade-in animation
+            root.setOpacity(0);
+
+            // Make window draggable
+            controller.barPane.setOnMousePressed(event -> {
+                xOffset = event.getSceneX();
+                yOffset = event.getSceneY();
+            });
+
+            controller.barPane.setOnMouseDragged(event -> {
+                stage.setX(event.getScreenX() - xOffset);
+                stage.setY(event.getScreenY() - yOffset);
+            });
+
+            // Override the close button action
+            controller.btnExit.setOnAction(e -> {
+                FadeTransition fadeOut = new FadeTransition(Duration.millis(300), root);
+                fadeOut.setFromValue(1.0);
+                fadeOut.setToValue(0.0);
+                fadeOut.setOnFinished(event -> stage.close());
+                fadeOut.play();
+            });
+
+            // Show the form
+            stage.centerOnScreen();
+            stage.show();
+
+            // Play fade-in animation
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), root);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.play();
+
+            // Wait for stage to close
+            stage.setOnHidden(e -> loadCategories());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error loading category manager: " + e.getMessage());
+        }
+    }
+
     public void setProductController(ProductController productController) {
+        // Store reference to ProductController if needed
         this.productController = productController;
     }
 
@@ -210,10 +340,121 @@ public class AddProductController {
     }
 
     private void captureImage() {
-        // In a real app, this would open a camera interface
-        // For now, we'll just use the file import dialog
-        importImage();
+        try {
+            // Load the camera dialog FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/modals/cam-dialog.fxml"));
+            javafx.scene.layout.Region root = loader.load();
+            CamDialogController controller = loader.getController();
+
+            // Set parent controller reference for callback
+            controller.setParentController(this);
+
+            // Apply CSS
+            root.getStylesheets().add(getClass().getResource("/css/cam-dialog.css").toExternalForm());
+
+            // Create transparent scene
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+
+            // Create stage with transparent style
+            Stage stage = new Stage();
+            stage.initStyle(StageStyle.TRANSPARENT);
+            stage.setScene(scene);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(addMPane.getScene().getWindow());
+
+            // Apply rounded corners
+            Rectangle clip = new Rectangle(root.getPrefWidth(), root.getPrefHeight());
+            clip.setArcWidth(20);
+            clip.setArcHeight(20);
+            root.setClip(clip);
+
+            // Update clip size when window is resized
+            root.layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
+                clip.setWidth(newValue.getWidth());
+                clip.setHeight(newValue.getHeight());
+            });
+
+            // Add drop shadow for depth effect
+            javafx.scene.effect.DropShadow dropShadow = new javafx.scene.effect.DropShadow();
+            dropShadow.setRadius(5);
+            dropShadow.setSpread(0.05);
+            dropShadow.setOffsetY(3);
+            dropShadow.setColor(Color.rgb(0, 0, 0, 0.5));
+
+            // Add background panel to receive shadow
+            AnchorPane shadowReceiver = new AnchorPane();
+            shadowReceiver.setStyle("-fx-background-color: #F5EBE0; -fx-background-radius: 10;");
+            shadowReceiver.setPrefSize(root.getPrefWidth() - 2, root.getPrefHeight() - 2);
+            shadowReceiver.setEffect(dropShadow);
+
+            // Place shadow receiver behind content
+            AnchorPane.setTopAnchor(shadowReceiver, 2.0);
+            AnchorPane.setLeftAnchor(shadowReceiver, 2.0);
+            AnchorPane.setRightAnchor(shadowReceiver, 2.0);
+            AnchorPane.setBottomAnchor(shadowReceiver, 2.0);
+
+            // Add shadow receiver at index 0 (behind other content)
+            ((AnchorPane)root).getChildren().add(0, shadowReceiver);
+
+            // Update clip size when window is resized
+            root.layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
+                clip.setWidth(newValue.getWidth());
+                clip.setHeight(newValue.getHeight());
+                shadowReceiver.setPrefSize(newValue.getWidth() - 2, newValue.getHeight() - 2);
+            });
+
+
+            // Set initial opacity for fade-in
+            root.setOpacity(0);
+
+            // Show the dialog
+            stage.centerOnScreen();
+            stage.show();
+
+            // Play fade-in animation
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), root);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.play();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error loading camera dialog: " + e.getMessage());
+        }
     }
+
+    // Add this method to AddProductController to receive the captured image
+    public void setProductImage(Image image) {
+        if (image != null) {
+            productPic.setImage(image);
+
+            // Create a temporary file to store the captured image
+            try {
+                File tempDir = new File("C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage");
+                if (!tempDir.exists()) {
+                    tempDir.mkdirs();
+                }
+
+                // Create a unique file name
+                String fileName = "captured_" + System.currentTimeMillis() + ".png";
+                File imageFile = new File(tempDir, fileName);
+
+                // Convert Image to BufferedImage and save to file
+                BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+                ImageIO.write(bufferedImage, "png", imageFile);
+
+                // Store the file reference for later use during product saving
+                selectedImageFile = imageFile;
+
+                showNotification("Image captured successfully!");
+            } catch (IOException e) {
+                e.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "Failed to save captured image: " + e.getMessage());
+            }
+        }
+    }
+
 
     private void importImage() {
         FileChooser fileChooser = new FileChooser();
@@ -269,7 +510,8 @@ public class AddProductController {
                 String barcodePath = ProductUtils.generateBarcode(productId);
                 ProductDAO.updateBarcodePath(productId, barcodePath);
 
-                showAlert(Alert.AlertType.INFORMATION, "Product added successfully!");
+                // Show notification instead of alert
+                showNotification("Product added successfully!");
                 // Refresh the product table
                 if (productController != null) {
                     productController.refreshProductTable();
@@ -293,7 +535,7 @@ public class AddProductController {
         costPriceFld.clear();
         markupFld.clear();
         sellingPriceFld.clear();
-        stocksSpinner.setValue(0);
+        stocksSpinner.setValue(10);
         productPic.setImage(null);
         selectedImageFile = null;
     }
@@ -304,6 +546,49 @@ public class AddProductController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    public void showNotification(String message) {
+        // Create notification pane
+        Pane notification = new Pane();
+        notification.setStyle(
+                "-fx-background-color: #81b29a;" +
+                        "-fx-background-radius: 5px;" +
+                        "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 3);"
+        );
+
+        // Add notification text
+        Label label = new Label(message);
+        label.setStyle(
+                "-fx-text-fill: white;" +
+                        "-fx-font-weight: bold;" +
+                        "-fx-font-size: 14px;" +
+                        "-fx-padding: 10px;"
+        );
+
+        // Size and position the elements
+        notification.getChildren().add(label);
+        double notificationWidth = 220;
+        double notificationHeight = 40;
+
+        label.setPrefWidth(notificationWidth);
+        label.setPrefHeight(notificationHeight);
+        label.setAlignment(Pos.CENTER);
+
+        notification.setPrefWidth(notificationWidth);
+        notification.setPrefHeight(notificationHeight);
+        notification.setLayoutX(addMPane.getWidth() - notificationWidth - 20);
+        notification.setLayoutY(addMPane.getHeight() - notificationHeight - 270);
+
+        // Add to scene and animate
+        addMPane.getChildren().add(notification);
+
+        FadeTransition fadeOut = new FadeTransition(Duration.seconds(2.5), notification);
+        fadeOut.setFromValue(1.0);
+        fadeOut.setToValue(0.0);
+        fadeOut.setDelay(Duration.seconds(1.5));
+        fadeOut.setOnFinished(e -> addMPane.getChildren().remove(notification));
+        fadeOut.play();
     }
 
 }

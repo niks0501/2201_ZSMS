@@ -7,6 +7,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -21,7 +22,9 @@ import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
 import other_classes.ProductDAO;
 import services.ProductLoadService;
+import table_models.Category;
 import table_models.Product;
+import table_models.SortOption;
 
 import java.io.File;
 import java.io.IOException;
@@ -72,7 +75,7 @@ public class ProductController {
     private TableColumn<Product, BigDecimal> sellingPriceColumn;
 
     @FXML
-    private MFXComboBox<?> sortTbl;
+    private MFXComboBox<SortOption> sortTbl;
 
     @FXML
     private TableColumn<Product, Integer> stocksColumn;
@@ -80,12 +83,18 @@ public class ProductController {
     @FXML
     private StackPane popupPane;
 
+    @FXML
+    private MFXButton btnReloadTbl;
+
+    private String tempImagePath;
+
     private Parent addProductForm;
     private boolean isFormVisible = false;
-    private double initialYPosition = -1; // Default: auto-calculated
-    private double finalYPosition = 250;    // Default: top of container
+    private final double initialYPosition = -1; // Default: auto-calculated
+    private final double finalYPosition = 250;    // Default: top of container
     private ProductLoadService productLoadService;
     private ObservableList<Product> allProducts;
+    private final ObservableList<Product> filteredProducts = FXCollections.observableArrayList();
 
     @FXML
     public void initialize() {
@@ -103,6 +112,7 @@ public class ProductController {
 
         // Button click handler
         btnPopup.setOnAction(event -> toggleAddProductForm());
+        btnReloadTbl.setOnAction(event -> refreshProductTable());
 
         // Set up table columns
         setupTableColumns();
@@ -110,21 +120,154 @@ public class ProductController {
         // Initialize product load service
         productLoadService = ProductLoadService.getInstance();
 
-        // Set up service success handler
-        productLoadService.setOnSucceeded(event -> {
-            allProducts = productLoadService.getValue();
-            initializePagination(allProducts);
+        // All service-related operations MUST happen on JavaFX thread
+        Platform.runLater(() -> {
+            // Set up service success handler
+            productLoadService.setOnSucceeded(event -> {
+                allProducts = productLoadService.getValue();
+                filteredProducts.clear();
+                filteredProducts.addAll(allProducts);
+                initializePagination(filteredProducts);
+            });
+
+            // Set up service failure handler
+            productLoadService.setOnFailed(event -> {
+                Throwable exception = productLoadService.getException();
+                System.err.println("Failed to load products: " + exception.getMessage());
+            });
+
+            // Only start the service if it's not already running
+            if (!productLoadService.isRunning()) {
+                productLoadService.reloadProducts();
+            }
         });
 
-        // Set up service failure handler
-        productLoadService.setOnFailed(event -> {
-            Throwable exception = productLoadService.getException();
-            System.err.println("Failed to load products: " + exception.getMessage());
-            // Display error to user if needed
+        // Set up search field listener
+        setupSearchField();
+        setupSortComboBox();
+        productTbl.setUserData(this);
+    }
+
+    private void setupSortComboBox() {
+        // Create ObservableList for sort options
+        ObservableList<SortOption> sortOptions = FXCollections.observableArrayList();
+
+        // Add date sorting options
+        sortOptions.add(new SortOption("Newest to Oldest", "date"));
+        sortOptions.add(new SortOption("Oldest to Newest", "date"));
+
+        // Add category options from database
+        try {
+            ObservableList<Category> categories = ProductDAO.getAllCategories();
+            for (Category category : categories) {
+                sortOptions.add(new SortOption(category.getName(), "category", category.getId()));
+            }
+        } catch (Exception e) {
+            System.err.println("Error loading categories for sort: " + e.getMessage());
+        }
+
+        // Set items to combo box
+        sortTbl.setItems(sortOptions);
+
+        // Set default selection to "Newest to Oldest"
+        sortTbl.selectFirst();
+
+        // Add change listener
+        sortTbl.valueProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                applySortFilter(newVal);
+            }
+        });
+    }
+
+    private void applySortFilter(SortOption option) {
+        if (allProducts == null) return;
+
+        // Start with current search filter
+        ObservableList<Product> tempProducts = FXCollections.observableArrayList();
+        String searchText = searchFld.getText();
+
+        // Apply search filter first
+        if (searchText == null || searchText.trim().isEmpty()) {
+            tempProducts.addAll(allProducts);
+        } else {
+            String lowerCaseFilter = searchText.toLowerCase().trim();
+            for (Product product : allProducts) {
+                boolean matchesName = product.getName().toLowerCase().contains(lowerCaseFilter);
+                boolean matchesId = String.valueOf(product.getProductId()).contains(lowerCaseFilter);
+                if (matchesName || matchesId) {
+                    tempProducts.add(product);
+                }
+            }
+        }
+
+        // Apply category filter or date sort
+        if ("category".equals(option.getType()) && option.getCategoryId() != null) {
+            // Filter by category
+            ObservableList<Product> categoryFiltered = FXCollections.observableArrayList();
+            for (Product product : tempProducts) {
+                // We need to get categoryId from product.getCategory()
+                // Assuming ProductDAO has a method to get category ID from name
+                Integer productCategoryId = ProductDAO.getCategoryIdByName(product.getCategory());
+                if (option.getCategoryId().equals(productCategoryId)) {
+                    categoryFiltered.add(product);
+                }
+            }
+            tempProducts = categoryFiltered;
+        } else if ("date".equals(option.getType())) {
+            // Sort by date (product ID as proxy for creation date)
+            tempProducts.sort((p1, p2) -> {
+                if (option.getName().equals("Newest to Oldest")) {
+                    return Integer.compare(p2.getProductId(), p1.getProductId());
+                } else {
+                    return Integer.compare(p1.getProductId(), p2.getProductId());
+                }
+            });
+        }
+
+        // Update filtered products and pagination
+        filteredProducts.clear();
+        filteredProducts.addAll(tempProducts);
+        initializePagination(filteredProducts);
+    }
+
+    private void setupSearchField() {
+        searchFld.textProperty().addListener((observable, oldValue, newValue) -> {
+            filterProducts(newValue);
         });
 
-        // Start loading products
-        productLoadService.reloadProducts();
+    }
+
+    private void filterProducts(String searchText) {
+        if (allProducts == null) return;
+
+        filteredProducts.clear();
+
+        // If search text is empty, show all products
+        if (searchText == null || searchText.trim().isEmpty()) {
+            filteredProducts.addAll(allProducts);
+        } else {
+            // Convert to lowercase for case-insensitive search
+            String lowerCaseFilter = searchText.toLowerCase().trim();
+
+            // Filter by name or ID
+            for (Product product : allProducts) {
+                boolean matchesName = product.getName().toLowerCase().contains(lowerCaseFilter);
+                boolean matchesId = String.valueOf(product.getProductId()).contains(lowerCaseFilter);
+
+                if (matchesName || matchesId) {
+                    filteredProducts.add(product);
+                }
+            }
+        }
+
+        // Update pagination with filtered results
+        initializePagination(filteredProducts);
+
+        // Show message if no results found
+        if (filteredProducts.isEmpty() && !searchText.isEmpty()) {
+            productTbl.setPlaceholder(new Label("No matching products found"));
+        }
     }
 
     private void loadAddProductForm(){
@@ -158,21 +301,25 @@ public class ProductController {
         sellingPriceColumn.setCellValueFactory(new PropertyValueFactory<>("sellingPrice"));
         stocksColumn.setCellValueFactory(new PropertyValueFactory<>("stock"));
         barcodeColumn.setCellValueFactory(new PropertyValueFactory<>("barcodeImage"));
-        actionColumn.setCellValueFactory(new PropertyValueFactory<>("actionButton"));
+        actionColumn.setCellValueFactory(new PropertyValueFactory<>("actionButtons"));
     }
 
-    private void initializePagination(ObservableList<Product> productList) {
-        int itemsPerPage = 10;
-        int totalPages = (int) Math.ceil((double) productList.size() / itemsPerPage);
+    private void initializePagination(ObservableList<Product> products) {
+        int itemsPerPage = 10; // Set your preferred page size
+        int pageCount = (products.size() / itemsPerPage) + ((products.size() % itemsPerPage > 0) ? 1 : 0);
 
-        // Set page count for standard JavaFX Pagination
-        productTblPage.setPageCount(Math.max(1, totalPages));
+        // Set page count (minimum 1)
+        productTblPage.setPageCount(Math.max(1, pageCount));
 
-        // Set up page factory
+        // Set page factory
         productTblPage.setPageFactory(pageIndex -> {
-            updateTableForPage(productList, pageIndex, itemsPerPage);
+            updateTableForPage(products, pageIndex, itemsPerPage);
+            // Return an empty pane instead of the table itself
             return new Pane();
         });
+
+        // Go to first page when data changes
+        productTblPage.setCurrentPageIndex(0);
     }
 
     private void updateTableForPage(ObservableList<Product> productList, int pageIndex, int itemsPerPage) {
@@ -190,7 +337,22 @@ public class ProductController {
 
     // Method to refresh products table - can be called from other controllers
     public void refreshProductTable() {
-        productLoadService.reloadProducts();
+        SortOption currentSort = sortTbl.getValue();
+
+        Platform.runLater(() -> {
+            productLoadService.setOnSucceeded(event -> {
+                allProducts = productLoadService.getValue();
+                if (currentSort != null) {
+                    applySortFilter(currentSort);
+                } else {
+                    filterProducts(searchFld.getText());
+                }
+            });
+
+            if (!productLoadService.isRunning()) {
+                productLoadService.reloadProducts();
+            }
+        });
     }
 
     private double getInitialYPosition() {
@@ -279,6 +441,12 @@ public class ProductController {
             isFormVisible = false;
         });
         parallelTransition.play();
+    }
+
+    // Add method to show/hide columns
+    public void showHiddenColumns(boolean show) {
+        costPriceColumn.setVisible(show);
+        markupColumn.setVisible(show);
     }
 
 }

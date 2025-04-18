@@ -1,5 +1,6 @@
 package services;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
@@ -34,24 +35,39 @@ public class ProductLoadService extends Service<ObservableList<Product>> {
             @Override
             protected ObservableList<Product> call() {
                 // Load products in background thread
-                return ProductDAO.getAllProducts();
+                ObservableList<Product> products = ProductDAO.getAllProducts();
+
+                // Sort products by ID in descending order to show newest first
+                FXCollections.sort(products, (p1, p2) ->
+                        Integer.compare(p2.getProductId(), p1.getProductId()));
+
+                return products;
             }
         };
     }
 
     // Method to restart the service
     public void reloadProducts() {
-        if (getState() == State.RUNNING) {
-            // If already running, wait for it to complete
+        // First check we're on the JavaFX thread
+        if (!Platform.isFxApplicationThread()) {
+            Platform.runLater(this::reloadProducts);
             return;
         }
 
-        // Reset if in succeeded or failed state
-        if (getState() == State.SUCCEEDED || getState() == State.FAILED) {
-            reset();
+        // If already running, don't start again
+        if (isRunning()) {
+            return;
         }
 
-        // Start loading data
-        restart();
+        // Reset service before restarting
+        reset();
+        start();
+    }
+
+    // Method to load products after UI is ready
+    public void loadProductsDelayed() {
+        Platform.runLater(() -> {
+            reloadProducts();
+        });
     }
 }

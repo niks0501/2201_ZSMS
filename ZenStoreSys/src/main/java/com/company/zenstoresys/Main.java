@@ -13,12 +13,12 @@ import java.util.Objects;
 public class Main extends Application {
     @Override
     public void start(Stage stage) throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("products.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(Main.class.getResource("loading.fxml"));
         Scene scene = new Scene(fxmlLoader.load());
 
         // Make Scene Transparent
         scene.setFill(Color.TRANSPARENT);
-        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/products.css")).toExternalForm());
+        scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/css/loading.css")).toExternalForm());
 
         // Make Stage Transparent & Remove Default Decorations
         stage.initStyle(StageStyle.TRANSPARENT);
