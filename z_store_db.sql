@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 14, 2025 at 06:22 PM
+-- Generation Time: Apr 17, 2025 at 06:14 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -42,6 +42,35 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `GetAllProducts` ()   BEGIN
         categories c ON p.category_id = c.category_id;
 END$$
 
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_add_category` (IN `p_category_name` VARCHAR(100), OUT `p_success` BOOLEAN)   BEGIN
+    DECLARE EXIT HANDLER FOR 1062 -- Duplicate key error
+        BEGIN
+            SET p_success = FALSE;
+        END;
+
+    INSERT INTO categories (category_name) VALUES (p_category_name);
+    SET p_success = TRUE;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_delete_category` (IN `p_category_id` INT, OUT `p_success` BOOLEAN)   BEGIN
+    DECLARE EXIT HANDLER FOR 1451 -- Foreign key constraint error
+        BEGIN
+            SET p_success = FALSE;
+        END;
+
+    DELETE FROM categories WHERE category_id = p_category_id;
+
+    IF ROW_COUNT() > 0 THEN
+        SET p_success = TRUE;
+    ELSE
+        SET p_success = FALSE;
+    END IF;
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_get_all_categories` ()   BEGIN
+    SELECT category_id, category_name FROM categories ORDER BY category_id;
+END$$
+
 CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_insert_product` (IN `p_name` VARCHAR(255), IN `p_category_id` INT, IN `p_cost_price` DECIMAL(10,2), IN `p_markup_percentage` DECIMAL(10,2), IN `p_stock` INT, IN `p_selling_price` DECIMAL(10,2), IN `p_image_path` VARCHAR(255), OUT `p_product_id` INT)   BEGIN
     INSERT INTO products (
         name,
@@ -65,6 +94,22 @@ CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_insert_product` (IN `p_name` VAR
            );
 
     SET p_product_id = LAST_INSERT_ID();
+END$$
+
+CREATE DEFINER=`root`@`localhost` PROCEDURE `sp_update_category` (IN `p_category_id` INT, IN `p_category_name` VARCHAR(100), OUT `p_success` BOOLEAN)   BEGIN
+    DECLARE EXIT HANDLER FOR 1062 -- Duplicate key error
+        BEGIN
+            SET p_success = FALSE;
+        END;
+
+    UPDATE categories SET category_name = p_category_name
+    WHERE category_id = p_category_id;
+
+    IF ROW_COUNT() > 0 THEN
+        SET p_success = TRUE;
+    ELSE
+        SET p_success = FALSE;
+    END IF;
 END$$
 
 DELIMITER ;
@@ -105,7 +150,13 @@ CREATE TABLE `categories` (
 --
 
 INSERT INTO `categories` (`category_id`, `category_name`) VALUES
-(1, 'Product');
+(7, 'Appliances'),
+(4, 'Bath'),
+(9, 'Cottons'),
+(3, 'Dairy'),
+(5, 'Detergents'),
+(1, 'Product'),
+(8, 'Soapy');
 
 -- --------------------------------------------------------
 
@@ -165,7 +216,24 @@ INSERT INTO `products` (`product_id`, `image_path`, `name`, `category_id`, `cost
 (10, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744647161056.png', 'weuiorhqwehpqwiond', 1, 20.00, 15.00, 10, 23.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_10.png', '2025-04-14 16:12:41'),
 (11, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744647260721.png', 'asd2asdasdasds', 1, 50.00, 5.00, 10, 52.50, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_11.png', '2025-04-14 16:14:20'),
 (12, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744647320897.png', 'blabala', 1, 500.00, 10.00, 10, 550.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_12.png', '2025-04-14 16:15:20'),
-(13, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744647487040.png', 'quiyroosdfoi', 1, 327.00, 20.00, 10, 392.40, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_13.png', '2025-04-14 16:18:07');
+(13, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744647487040.png', 'quiyroosdfoi', 1, 327.00, 20.00, 10, 392.40, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_13.png', '2025-04-14 16:18:07'),
+(14, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744708322000.png', 'qwoeipp[iqwe', 1, 130.00, 10.00, 10, 143.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_14.png', '2025-04-15 09:12:02'),
+(15, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744708703617.png', 'sadasd2asd4235', 1, 400.00, 8.00, 10, 432.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_15.png', '2025-04-15 09:18:23'),
+(16, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744711707141.png', 'AEDRQWEASASD', 1, 865.00, 5.00, 10, 908.25, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_16.png', '2025-04-15 10:08:27'),
+(17, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744804202423.png', 'Bear Brand', 3, 25.00, 5.00, 10, 26.25, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_17.png', '2025-04-16 11:50:02'),
+(18, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744876239930.png', 'mklmvsdjksdjk', 4, 130.00, 5.00, 20, 136.50, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_18.png', '2025-04-17 07:50:39'),
+(19, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744876356847.png', 'tyuruerturt', 7, 600.00, 13.00, 10, 678.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_19.png', '2025-04-17 07:52:36'),
+(20, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744876572062.jpg', 'Surf 50 ML', 5, 13.00, 5.00, 20, 13.65, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_20.png', '2025-04-17 07:56:12'),
+(21, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744876776539.jpg', 'Tide', 5, 12.00, 10.00, 30, 13.20, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_21.png', '2025-04-17 07:59:36'),
+(22, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744876990034.png', 'Safe Guard', 8, 34.00, 15.00, 10, 39.10, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_22.png', '2025-04-17 08:03:10'),
+(23, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744877222046.png', 'Palmolive', 8, 30.00, 18.00, 10, 35.40, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_23.png', '2025-04-17 08:07:02'),
+(24, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744877464451.png', 'erqerqerewrtwrt', 9, 45.00, 4.00, 10, 46.80, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_24.png', '2025-04-17 08:11:04'),
+(25, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744878215564.png', 'ryuityiryee', 7, 53.00, 7.00, 10, 56.71, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_25.png', '2025-04-17 08:23:35'),
+(28, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744878768378.png', 'awasdawdawdasdad', 4, 23.00, 5.00, 20, 24.15, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_28.png', '2025-04-17 08:32:48'),
+(33, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\src\\main\\resources\\productImage\\product_33_1744898076858.png', '90tyegdfggad', 5, 45.00, 12.00, 35, 50.40, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_33.png', '2025-04-17 09:04:50'),
+(42, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744881889420.png', '34t98wehfh489tb', 7, 50.00, 10.00, 20, 55.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_42.png', '2025-04-17 09:24:49'),
+(43, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_43_1744898290811.png', 'selwyn', 4, 1200.00, 2.00, 10, 1224.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_43.png', '2025-04-17 13:57:25'),
+(44, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_44_1744904932071.png', 'Mouses', 5, 500.00, 10.00, 10, 550.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_44.png', '2025-04-17 14:02:06');
 
 -- --------------------------------------------------------
 
@@ -275,7 +343,7 @@ ALTER TABLE `admin`
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `low_stock_alerts`
@@ -287,7 +355,7 @@ ALTER TABLE `low_stock_alerts`
 -- AUTO_INCREMENT for table `products`
 --
 ALTER TABLE `products`
-  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `product_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=46;
 
 --
 -- AUTO_INCREMENT for table `product_prices`

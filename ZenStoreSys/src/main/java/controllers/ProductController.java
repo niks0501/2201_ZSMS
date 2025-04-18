@@ -7,6 +7,7 @@ import javafx.animation.FadeTransition;
 import javafx.animation.Interpolator;
 import javafx.animation.ParallelTransition;
 import javafx.animation.TranslateTransition;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -120,7 +121,6 @@ public class ProductController {
         productLoadService = ProductLoadService.getInstance();
 
         // Set up service success handler
-        // Set up service success handler
         productLoadService.setOnSucceeded(event -> {
             allProducts = productLoadService.getValue();
             // Initialize filteredProducts with all products
@@ -136,8 +136,8 @@ public class ProductController {
             // Display error to user if needed
         });
 
-        // Start loading products
-        productLoadService.reloadProducts();
+        // Start loading products AFTER UI is fully loaded
+        Platform.runLater(() -> productLoadService.reloadProducts());
 
         // Set up search field listener
         setupSearchField();

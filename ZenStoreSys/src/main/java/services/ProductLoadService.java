@@ -1,5 +1,6 @@
 package services;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Service;
@@ -59,5 +60,12 @@ public class ProductLoadService extends Service<ObservableList<Product>> {
 
         // Start loading data
         restart();
+    }
+
+    // Method to load products after UI is ready
+    public void loadProductsDelayed() {
+        Platform.runLater(() -> {
+            reloadProducts();
+        });
     }
 }

@@ -5,6 +5,7 @@ import io.github.palexdev.materialfx.controls.MFXComboBox;
 import io.github.palexdev.materialfx.controls.MFXSpinner;
 import io.github.palexdev.materialfx.controls.MFXTextField;
 import io.github.palexdev.materialfx.controls.models.spinner.*;
+import io.github.palexdev.materialfx.utils.SwingFXUtils;
 import javafx.animation.FadeTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -30,6 +31,8 @@ import table_models.Category;
 import utils.ProductUtils;
 
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 
@@ -337,10 +340,121 @@ public class AddProductController {
     }
 
     private void captureImage() {
-        // In a real app, this would open a camera interface
-        // For now, we'll just use the file import dialog
-        importImage();
+        try {
+            // Load the camera dialog FXML
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/modals/cam-dialog.fxml"));
+            javafx.scene.layout.Region root = loader.load();
+            CamDialogController controller = loader.getController();
+
+            // Set parent controller reference for callback
+            controller.setParentController(this);
+
+            // Apply CSS
+            root.getStylesheets().add(getClass().getResource("/css/cam-dialog.css").toExternalForm());
+
+            // Create transparent scene
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+
+            // Create stage with transparent style
+            Stage stage = new Stage();
+            stage.initStyle(StageStyle.TRANSPARENT);
+            stage.setScene(scene);
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(addMPane.getScene().getWindow());
+
+            // Apply rounded corners
+            Rectangle clip = new Rectangle(root.getPrefWidth(), root.getPrefHeight());
+            clip.setArcWidth(20);
+            clip.setArcHeight(20);
+            root.setClip(clip);
+
+            // Update clip size when window is resized
+            root.layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
+                clip.setWidth(newValue.getWidth());
+                clip.setHeight(newValue.getHeight());
+            });
+
+            // Add drop shadow for depth effect
+            javafx.scene.effect.DropShadow dropShadow = new javafx.scene.effect.DropShadow();
+            dropShadow.setRadius(5);
+            dropShadow.setSpread(0.05);
+            dropShadow.setOffsetY(3);
+            dropShadow.setColor(Color.rgb(0, 0, 0, 0.5));
+
+            // Add background panel to receive shadow
+            AnchorPane shadowReceiver = new AnchorPane();
+            shadowReceiver.setStyle("-fx-background-color: #F5EBE0; -fx-background-radius: 10;");
+            shadowReceiver.setPrefSize(root.getPrefWidth() - 2, root.getPrefHeight() - 2);
+            shadowReceiver.setEffect(dropShadow);
+
+            // Place shadow receiver behind content
+            AnchorPane.setTopAnchor(shadowReceiver, 2.0);
+            AnchorPane.setLeftAnchor(shadowReceiver, 2.0);
+            AnchorPane.setRightAnchor(shadowReceiver, 2.0);
+            AnchorPane.setBottomAnchor(shadowReceiver, 2.0);
+
+            // Add shadow receiver at index 0 (behind other content)
+            ((AnchorPane)root).getChildren().add(0, shadowReceiver);
+
+            // Update clip size when window is resized
+            root.layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
+                clip.setWidth(newValue.getWidth());
+                clip.setHeight(newValue.getHeight());
+                shadowReceiver.setPrefSize(newValue.getWidth() - 2, newValue.getHeight() - 2);
+            });
+
+
+            // Set initial opacity for fade-in
+            root.setOpacity(0);
+
+            // Show the dialog
+            stage.centerOnScreen();
+            stage.show();
+
+            // Play fade-in animation
+            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), root);
+            fadeIn.setFromValue(0.0);
+            fadeIn.setToValue(1.0);
+            fadeIn.play();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error loading camera dialog: " + e.getMessage());
+        }
     }
+
+    // Add this method to AddProductController to receive the captured image
+    public void setProductImage(Image image) {
+        if (image != null) {
+            productPic.setImage(image);
+
+            // Create a temporary file to store the captured image
+            try {
+                File tempDir = new File("C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage");
+                if (!tempDir.exists()) {
+                    tempDir.mkdirs();
+                }
+
+                // Create a unique file name
+                String fileName = "captured_" + System.currentTimeMillis() + ".png";
+                File imageFile = new File(tempDir, fileName);
+
+                // Convert Image to BufferedImage and save to file
+                BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+                ImageIO.write(bufferedImage, "png", imageFile);
+
+                // Store the file reference for later use during product saving
+                selectedImageFile = imageFile;
+
+                showNotification("Image captured successfully!");
+            } catch (IOException e) {
+                e.printStackTrace();
+                showAlert(Alert.AlertType.ERROR, "Failed to save captured image: " + e.getMessage());
+            }
+        }
+    }
+
 
     private void importImage() {
         FileChooser fileChooser = new FileChooser();

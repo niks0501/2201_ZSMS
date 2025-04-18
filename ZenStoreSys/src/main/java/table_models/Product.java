@@ -1,25 +1,35 @@
 package table_models;
 
+import controllers.AddProductController;
+import controllers.CamDialogController;
 import controllers.ProductController;
+import io.github.palexdev.materialfx.utils.SwingFXUtils;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
+import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import javafx.util.Callback;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import other_classes.ProductDAO;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.io.File;
@@ -641,11 +651,120 @@ public class Product {
 
                 // Handle take picture action
                 takePictureItem.setOnAction(e -> {
-                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("Camera");
-                    alert.setHeaderText(null);
-                    alert.setContentText("Camera functionality would be implemented here.");
-                    alert.showAndWait();
+                    try {
+                        // Load the webcam dialog
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/modals/cam-dialog.fxml"));
+                        Parent root = loader.load();
+
+                        // Get controller
+                        CamDialogController camController = loader.getController();
+
+                        // Get the current product
+                        Product currentProduct = getTableView().getItems().get(getIndex());
+
+                        // Create custom controller implementation
+                        AddProductController customController = new AddProductController() {
+                            @Override
+                            public void setProductImage(Image image) {
+                                if (image != null) {
+                                    try {
+                                        // Save image to file
+                                        File tempDir = new File("C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage");
+                                        if (!tempDir.exists()) {
+                                            tempDir.mkdirs();
+                                        }
+
+                                        // Create a unique file name
+                                        String fileName = "captured_" + currentProduct.getProductId() + "_" + System.currentTimeMillis() + ".png";
+                                        File imageFile = new File(tempDir, fileName);
+
+                                        // Convert Image to BufferedImage and save to file
+                                        BufferedImage bufferedImage = SwingFXUtils.fromFXImage(image, null);
+                                        ImageIO.write(bufferedImage, "png", imageFile);
+
+                                        // Delete old image if it exists
+                                        if (currentProduct.getImagePath() != null && !currentProduct.getImagePath().isEmpty()) {
+                                            File oldFile = new File(currentProduct.getImagePath());
+                                            if (oldFile.exists()) {
+                                                oldFile.delete();
+                                            }
+                                        }
+
+                                        // Update product with new image path
+                                        String imagePath = imageFile.getAbsolutePath();
+                                        currentProduct.setImagePath(imagePath);
+
+                                        // Update the product in the database
+                                        ProductDAO.updateProduct(
+                                                currentProduct.getProductId(),
+                                                null, null, null, null, null,
+                                                imagePath
+                                        );
+
+                                        // Update the image view
+                                        Image picture = new Image(imageFile.toURI().toString(), 50, 50, true, true);
+                                        ImageView imageView = new ImageView(picture);
+                                        imageView.setFitWidth(50);
+                                        imageView.setFitHeight(50);
+
+                                        // Update cell
+                                        HBox container = new HBox(5);
+                                        container.setAlignment(Pos.CENTER);
+                                        container.getChildren().addAll(imageView, editImageBtn);
+                                        setGraphic(container);
+
+                                    } catch (IOException ex) {
+                                        ex.printStackTrace();
+                                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                                        alert.setTitle("Error");
+                                        alert.setHeaderText(null);
+                                        alert.setContentText("Failed to save captured image: " + ex.getMessage());
+                                        alert.showAndWait();
+                                    }
+                                }
+                            }
+                        };
+
+                        // Set the custom controller
+                        camController.setParentController(customController);
+
+                        // Create and configure the stage
+                        Stage stage = new Stage();
+                        Scene scene = new Scene(root);
+                        scene.setFill(Color.TRANSPARENT);
+
+                        // Add stylesheet
+                        if (getClass().getResource("/css/cam-dialog.css") != null) {
+                            scene.getStylesheets().add(getClass().getResource("/css/cam-dialog.css").toExternalForm());
+                        }
+
+                        // Apply rounded corners
+                        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle(
+                                root.prefWidth(-1), root.prefHeight(-1));
+                        clip.setArcWidth(20);
+                        clip.setArcHeight(20);
+                        root.setClip(clip);
+
+                        // Update clip size when window is resized
+                        root.layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
+                            clip.setWidth(newValue.getWidth());
+                            clip.setHeight(newValue.getHeight());
+                        });
+
+                        stage.initModality(Modality.APPLICATION_MODAL);
+                        stage.initStyle(StageStyle.TRANSPARENT);
+                        stage.setScene(scene);
+                        stage.centerOnScreen();
+                        stage.show();
+
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Error");
+                        alert.setHeaderText(null);
+                        alert.setContentText("Failed to open camera: " + ex.getMessage());
+                        alert.showAndWait();
+                    }
                 });
 
                 // Show context menu on button click
