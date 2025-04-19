@@ -10,6 +10,8 @@ module com.company.zenstoresys {
     requires webcam.capture;
     requires org.slf4j;
     requires org.slf4j.nop;
+    requires org.apache.pdfbox;
+    requires org.apache.pdfbox.io;
 
 
     opens controllers to javafx.fxml;

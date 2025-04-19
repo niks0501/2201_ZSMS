@@ -63,22 +63,60 @@ public class CategoryController {
 
     @FXML
     public void initialize() {
-        btnExit.setOnAction(e -> ((Stage) categoryManeFrame.getScene().getWindow()).close());
-        btnMinimize.setOnAction(e -> ((Stage) categoryManeFrame.getScene().getWindow()).setIconified(true));
-
+        // Initial setup - focus on UI components only
+        setupToggleSearch();
         setUpColumns();
-
-        // Configure actions column with edit and delete buttons
         setupActionsColumn();
 
-        // Load categories data
-        loadCategories();
-
-        // Set up add category button
         btnAddCategory.setOnAction(e -> addCategory());
 
-        // Set up the toggle search button functionality
-        setupToggleSearch();
+        // Show loading indicator
+        ProgressIndicator progressIndicator = new ProgressIndicator();
+        progressIndicator.setStyle("-fx-progress-color: #81B29A;");
+        progressIndicator.setPrefSize(40, 40);
+        VBox loadingBox = new VBox(progressIndicator, new Label("Loading categories..."));
+        loadingBox.setAlignment(Pos.CENTER);
+        loadingBox.setSpacing(10);
+        categoryManeFrame.getChildren().add(loadingBox);
+        AnchorPane.setTopAnchor(loadingBox, 150.0);
+        AnchorPane.setLeftAnchor(loadingBox, 0.0);
+        AnchorPane.setRightAnchor(loadingBox, 0.0);
+
+        // Load categories in background thread
+        loadCategoriesAsync(loadingBox);
+    }
+
+    private void loadCategoriesAsync(VBox loadingBox) {
+        new Thread(() -> {
+            try {
+                // Do database work in background thread
+                ObservableList<Category> categories = FXCollections.observableArrayList();
+
+                try (Connection conn = DBConnect.getConnection();
+                     Statement stmt = conn.createStatement();
+                     ResultSet rs = stmt.executeQuery("SELECT * FROM categories ORDER BY category_id")) {
+
+                    while (rs.next()) {
+                        int id = rs.getInt("category_id");
+                        String name = rs.getString("category_name");
+                        categories.add(new Category(id, name));
+                    }
+                }
+
+                // Update UI on JavaFX thread
+                javafx.application.Platform.runLater(() -> {
+                    categoryList.setAll(categories);
+                    categoryTbl.setItems(categoryList);
+                    categoryManeFrame.getChildren().remove(loadingBox);
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                javafx.application.Platform.runLater(() -> {
+                    categoryManeFrame.getChildren().remove(loadingBox);
+                    showAlert(Alert.AlertType.ERROR, "Failed to load categories: " + e.getMessage());
+                });
+            }
+        }).start();
     }
 
     private void setupToggleSearch() {
@@ -250,29 +288,54 @@ public class CategoryController {
         String categoryName = categoryNameFld.getText().trim();
 
         if (categoryName.isEmpty()) {
-            showAlert(Alert.AlertType.WARNING, "Please enter a category name");
+            showAlert(Alert.AlertType.WARNING, "Category name cannot be empty");
             return;
         }
 
-        try (Connection conn = DBConnect.getConnection();
-             CallableStatement stmt = conn.prepareCall("{CALL sp_add_category(?, ?)}")) {
+        // Show progress indicator
+        ProgressIndicator progress = new ProgressIndicator();
+        progress.setStyle("-fx-progress-color: #81B29A;");
 
-            stmt.setString(1, categoryName);
-            stmt.registerOutParameter(2, Types.BOOLEAN);
-            stmt.execute();
+        VBox progressBox = new VBox(progress, new Label("Adding category..."));
+        progressBox.setAlignment(Pos.CENTER);
+        progressBox.setStyle("-fx-background-color: transparent; -fx-padding: 10;");
+        categoryManeFrame.getChildren().add(progressBox);
+        AnchorPane.setTopAnchor(progressBox, 100.0);
+        AnchorPane.setLeftAnchor(progressBox, 100.0);
+        AnchorPane.setRightAnchor(progressBox, 100.0);
 
-            boolean success = stmt.getBoolean(2);
+        new Thread(() -> {
+            try (Connection conn = DBConnect.getConnection();
+                 PreparedStatement pstmt = conn.prepareStatement(
+                         "INSERT INTO categories (category_name) VALUES (?)",
+                         Statement.RETURN_GENERATED_KEYS)) {
 
-            if (success) {
-                categoryNameFld.clear();
-                showNotification("Category added successfully");
-                loadCategories();
-            } else {
-                showAlert(Alert.AlertType.ERROR, "Category name already exists");
+                pstmt.setString(1, categoryName);
+                int affectedRows = pstmt.executeUpdate();
+
+                if (affectedRows > 0) {
+                    ResultSet generatedKeys = pstmt.getGeneratedKeys();
+                    if (generatedKeys.next()) {
+                        int newCategoryId = generatedKeys.getInt(1);
+                        Category newCategory = new Category(newCategoryId, categoryName);
+
+                        javafx.application.Platform.runLater(() -> {
+                            categoryList.add(newCategory);
+                            categoryTbl.refresh();
+                            categoryNameFld.clear();
+                            showNotification("Category added successfully!");
+                            categoryManeFrame.getChildren().remove(progressBox);
+                        });
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                javafx.application.Platform.runLater(() -> {
+                    showAlert(Alert.AlertType.ERROR, "Error adding category: " + e.getMessage());
+                    categoryManeFrame.getChildren().remove(progressBox);
+                });
             }
-        } catch (SQLException e) {
-            showAlert(Alert.AlertType.ERROR, "Error adding category: " + e.getMessage());
-        }
+        }).start();
     }
 
     private void updateCategory(int categoryId, String newName) {

@@ -9,16 +9,19 @@ import io.github.palexdev.materialfx.utils.SwingFXUtils;
 import javafx.animation.FadeTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.DialogPane;
 import javafx.scene.control.Label;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
@@ -103,6 +106,7 @@ public class AddProductController {
         btnPic.setOnAction(e -> captureImage());
         btnImport.setOnAction(e -> importImage());
         btnEditCategory.setOnAction(e -> openCategoryManager());
+        btnPrintCode.setOnAction(e -> openPrintDialog());
 
         // Initialize the spinner model with IntegerSpinnerModel
         IntegerSpinnerModel spinnerModel = new IntegerSpinnerModel(10);
@@ -111,114 +115,231 @@ public class AddProductController {
 
     }
 
-    private void openCategoryManager() {
+    private void openPrintDialog() {
         try {
-            // Load the FXML
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/modals/product-category.fxml"));
-            javafx.scene.layout.Region root = loader.load();
-            CategoryController controller = loader.getController();
+            // Create and show loading indicator first
+            Stage loadingStage = new Stage();
+            loadingStage.initStyle(StageStyle.TRANSPARENT);
+            loadingStage.initModality(Modality.APPLICATION_MODAL);
+            loadingStage.initOwner(addMPane.getScene().getWindow());
 
-            // Apply CSS
-            root.getStylesheets().add(getClass().getResource("/css/product-category.css").toExternalForm());
+            ProgressIndicator progress = new ProgressIndicator();
+            progress.setStyle("-fx-progress-color: #81B29A;");
 
-            // Create transparent scene
-            Scene scene = new Scene(root);
-            scene.setFill(Color.TRANSPARENT);
+            Label loadingLabel = new Label("Opening Print Dialog...");
+            loadingLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
 
-            // Create stage with transparent style
-            Stage stage = new Stage();
-            stage.initStyle(StageStyle.TRANSPARENT);
-            stage.setScene(scene);
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.initOwner(addMPane.getScene().getWindow());
+            VBox loadingBox = new VBox(10, progress, loadingLabel);
+            loadingBox.setAlignment(Pos.CENTER);
+            loadingBox.setPadding(new Insets(20));
+            loadingBox.setStyle("-fx-background-color: transparent; -fx-background-radius: 10;");
 
-            // Apply rounded corners to entire window with depth effect
-            Rectangle clip = new Rectangle(root.getPrefWidth(), root.getPrefHeight());
-            clip.setArcWidth(20);
-            clip.setArcHeight(20);
-            root.setClip(clip);
+            Scene loadingScene = new Scene(loadingBox);
+            loadingScene.setFill(Color.TRANSPARENT);
+            loadingStage.setScene(loadingScene);
+            loadingStage.show();
 
-            // Add outer drop shadow for depth effect that follows the rounded corners
-            javafx.scene.effect.DropShadow dropShadow = new javafx.scene.effect.DropShadow();
-            dropShadow.setRadius(15);
-            dropShadow.setSpread(0.05);
-            dropShadow.setOffsetX(0);
-            dropShadow.setOffsetY(3);
-            dropShadow.setColor(Color.rgb(0, 0, 0, 0.3));
+            // Load dialog in background
+            new Thread(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/modals/print-dialog.fxml"));
+                    Parent root = loader.load();
+                    root.getStylesheets().add(getClass().getResource("/css/print-dialog.css").toExternalForm());
 
-            // Add background panel to receive shadow (slightly smaller than root)
-            AnchorPane shadowReceiver = new AnchorPane();
-            shadowReceiver.setStyle("-fx-background-color: white; -fx-background-radius: 20;");
-            shadowReceiver.setPrefSize(root.getPrefWidth() - 2, root.getPrefHeight() - 2);
-            shadowReceiver.setEffect(dropShadow);
+                    // Update UI on JavaFX thread
+                    javafx.application.Platform.runLater(() -> {
+                        try {
+                            // Close loading stage
+                            loadingStage.close();
 
-            // Place shadow receiver behind content
-            AnchorPane.setTopAnchor(shadowReceiver, 1.0);
-            AnchorPane.setLeftAnchor(shadowReceiver, 1.0);
-            AnchorPane.setRightAnchor(shadowReceiver, 1.0);
-            AnchorPane.setBottomAnchor(shadowReceiver, 1.0);
+                            // Setup and show actual dialog
+                            Scene scene = new Scene(root);
+                            scene.setFill(Color.TRANSPARENT);
 
-            // Add shadow receiver at index 0 (behind other content)
-            ((AnchorPane)root).getChildren().add(0, shadowReceiver);
+                            Stage stage = new Stage();
+                            stage.initStyle(StageStyle.TRANSPARENT);
+                            stage.setScene(scene);
+                            stage.initModality(Modality.APPLICATION_MODAL);
+                            stage.initOwner(addMPane.getScene().getWindow());
 
+                            // Apply visual effects (rounded corners, shadows)
+                            setupDialogVisuals(root, stage);
 
+                            stage.show();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            showAlert(Alert.AlertType.ERROR, "Error loading print dialog: " + e.getMessage());
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    javafx.application.Platform.runLater(() -> {
+                        loadingStage.close();
+                        showAlert(Alert.AlertType.ERROR, "Error loading print dialog: " + e.getMessage());
+                    });
+                }
+            }).start();
 
-            // Add subtle inner shadow to barPane for depth perception
-            javafx.scene.effect.InnerShadow innerShadow = new javafx.scene.effect.InnerShadow();
-            innerShadow.setRadius(2);
-            innerShadow.setChoke(0.1);
-            innerShadow.setOffsetY(1);
-            innerShadow.setColor(Color.rgb(0, 0, 0, 0.1));
-            controller.barPane.setEffect(innerShadow);
-
-            // Update clip size when window is resized
-            root.layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
-                clip.setWidth(newValue.getWidth());
-                clip.setHeight(newValue.getHeight());
-                shadowReceiver.setPrefSize(newValue.getWidth() - 2, newValue.getHeight() - 2);
-            });
-
-            // Set up for fade-in animation
-            root.setOpacity(0);
-
-            // Make window draggable
-            controller.barPane.setOnMousePressed(event -> {
-                xOffset = event.getSceneX();
-                yOffset = event.getSceneY();
-            });
-
-            controller.barPane.setOnMouseDragged(event -> {
-                stage.setX(event.getScreenX() - xOffset);
-                stage.setY(event.getScreenY() - yOffset);
-            });
-
-            // Override the close button action
-            controller.btnExit.setOnAction(e -> {
-                FadeTransition fadeOut = new FadeTransition(Duration.millis(300), root);
-                fadeOut.setFromValue(1.0);
-                fadeOut.setToValue(0.0);
-                fadeOut.setOnFinished(event -> stage.close());
-                fadeOut.play();
-            });
-
-            // Show the form
-            stage.centerOnScreen();
-            stage.show();
-
-            // Play fade-in animation
-            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), root);
-            fadeIn.setFromValue(0.0);
-            fadeIn.setToValue(1.0);
-            fadeIn.play();
-
-            // Wait for stage to close
-            stage.setOnHidden(e -> loadCategories());
-
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            showAlert(Alert.AlertType.ERROR, "Error loading category manager: " + e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Error opening print dialog: " + e.getMessage());
         }
     }
+
+    // Helper method for visual setup
+    private void setupDialogVisuals(Parent root, Stage stage) {
+        // Apply rounded corners
+        Rectangle clip = new Rectangle(root.prefWidth(-1), root.prefHeight(-1));
+        clip.setArcWidth(20);
+        clip.setArcHeight(20);
+        root.setClip(clip);
+
+        // Add shadow effect
+        javafx.scene.effect.DropShadow dropShadow = new javafx.scene.effect.DropShadow();
+        dropShadow.setRadius(15);
+        dropShadow.setSpread(0.05);
+        dropShadow.setOffsetY(3);
+        dropShadow.setColor(Color.rgb(0, 0, 0, 0.3));
+
+        AnchorPane shadowReceiver = new AnchorPane();
+        shadowReceiver.setStyle("-fx-background-color: white; -fx-background-radius: 20;");
+        shadowReceiver.setPrefSize(root.prefWidth(-1) - 2, root.prefHeight(-1) - 2);
+        shadowReceiver.setEffect(dropShadow);
+
+        AnchorPane.setTopAnchor(shadowReceiver, 1.0);
+        AnchorPane.setLeftAnchor(shadowReceiver, 1.0);
+        AnchorPane.setRightAnchor(shadowReceiver, 1.0);
+        AnchorPane.setBottomAnchor(shadowReceiver, 1.0);
+
+        ((AnchorPane)root).getChildren().add(0, shadowReceiver);
+
+        // Adjust clip on resize
+        root.layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
+            clip.setWidth(newValue.getWidth());
+            clip.setHeight(newValue.getHeight());
+            shadowReceiver.setPrefSize(newValue.getWidth() - 2, newValue.getHeight() - 2);
+        });
+
+        // Fade-in animation
+        root.setOpacity(0);
+
+        FadeTransition fadeIn = new FadeTransition(Duration.millis(300), root);
+        fadeIn.setFromValue(0.0);
+        fadeIn.setToValue(1.0);
+        fadeIn.play();
+    }
+
+    private void openCategoryManager() {
+        try {
+            // Show loading indicator first
+            Stage loadingStage = new Stage();
+            loadingStage.initStyle(StageStyle.TRANSPARENT);
+            loadingStage.initModality(Modality.APPLICATION_MODAL);
+            loadingStage.initOwner(addMPane.getScene().getWindow());
+
+            ProgressIndicator progress = new ProgressIndicator();
+            progress.setStyle("-fx-progress-color: #81B29A;");
+
+            Label loadingLabel = new Label("Opening Category Manager...");
+            loadingLabel.setStyle("-fx-font-size: 14px; -fx-text-fill: #333333;");
+
+            VBox loadingBox = new VBox(10, progress, loadingLabel);
+            loadingBox.setAlignment(Pos.CENTER);
+            loadingBox.setPadding(new Insets(20));
+            loadingBox.setStyle("-fx-background-color: white; -fx-background-radius: 10;");
+
+            Scene loadingScene = new Scene(loadingBox);
+            loadingScene.setFill(Color.TRANSPARENT);
+            loadingStage.setScene(loadingScene);
+            loadingStage.show();
+
+            // Load the dialog in background thread
+            new Thread(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/modals/product-category.fxml"));
+                    Parent root = loader.load();
+                    root.getStylesheets().add(getClass().getResource("/css/product-category.css").toExternalForm());
+
+                    javafx.application.Platform.runLater(() -> {
+                        try {
+                            loadingStage.close();
+
+                            CategoryController controller = loader.getController();
+
+                            // Create stage with transparent style
+                            Stage stage = new Stage();
+                            stage.initStyle(StageStyle.TRANSPARENT);
+                            stage.initModality(Modality.APPLICATION_MODAL);
+                            stage.initOwner(addMPane.getScene().getWindow());
+
+                            // Apply visual enhancements
+                            setupDialogVisuals(root, stage);
+
+                            // Add inner shadow to barPane
+                            javafx.scene.effect.InnerShadow innerShadow = new javafx.scene.effect.InnerShadow();
+                            innerShadow.setRadius(2);
+                            innerShadow.setChoke(0.1);
+                            innerShadow.setOffsetY(1);
+                            innerShadow.setColor(Color.rgb(0, 0, 0, 0.1));
+                            controller.barPane.setEffect(innerShadow);
+
+                            // Make window draggable
+                            controller.barPane.setOnMousePressed(event -> {
+                                xOffset = event.getSceneX();
+                                yOffset = event.getSceneY();
+                            });
+
+                            controller.barPane.setOnMouseDragged(event -> {
+                                stage.setX(event.getScreenX() - xOffset);
+                                stage.setY(event.getScreenY() - yOffset);
+                            });
+
+                            // Override close button action
+                            controller.btnExit.setOnAction(e -> {
+                                FadeTransition fadeOut = new FadeTransition(Duration.millis(300), root);
+                                fadeOut.setFromValue(1.0);
+                                fadeOut.setToValue(0.0);
+                                fadeOut.setOnFinished(event -> stage.close());
+                                fadeOut.play();
+                            });
+
+                            // Create scene and show stage
+                            Scene scene = new Scene(root);
+                            scene.setFill(Color.TRANSPARENT);
+                            stage.setScene(scene);
+                            stage.centerOnScreen();
+                            stage.show();
+
+                            // Play fade-in animation
+                            FadeTransition fadeIn = new FadeTransition(Duration.millis(300), root);
+                            fadeIn.setFromValue(0.0);
+                            fadeIn.setToValue(1.0);
+                            fadeIn.play();
+
+                            // Wait for stage to close
+                            stage.setOnHidden(e -> loadCategories());
+
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            showAlert(Alert.AlertType.ERROR, "Error setting up category dialog: " + e.getMessage());
+                        }
+                    });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    javafx.application.Platform.runLater(() -> {
+                        loadingStage.close();
+                        showAlert(Alert.AlertType.ERROR, "Error loading category manager: " + e.getMessage());
+                    });
+                }
+            }).start();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            showAlert(Alert.AlertType.ERROR, "Error opening category manager: " + e.getMessage());
+        }
+    }
+
+
 
     public void setProductController(ProductController productController) {
         // Store reference to ProductController if needed
