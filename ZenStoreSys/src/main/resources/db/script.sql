@@ -36,6 +36,30 @@ create table products
             on delete cascade
 );
 
+create table discounts
+(
+    discount_id    int auto_increment
+        primary key,
+    product_id     int                                          null,
+    category_id    int                                          null,
+    discount_type  enum ('PERCENTAGE', 'FIXED', 'BOGO', 'BULK') not null,
+    discount_value decimal(10, 2)                               not null,
+    min_quantity   int        default 1                         null,
+    start_date     datetime                                     not null,
+    end_date       datetime                                     not null,
+    is_active      tinyint(1) default 1                         null,
+    constraint discounts_ibfk_1
+        foreign key (product_id) references products (product_id),
+    constraint discounts_ibfk_2
+        foreign key (category_id) references categories (category_id)
+);
+
+create index category_id
+    on discounts (category_id);
+
+create index product_id
+    on discounts (product_id);
+
 create table low_stock_alerts
 (
     alert_id    int auto_increment
@@ -201,5 +225,16 @@ BEGIN
         SET p_success = FALSE;
     END IF;
 END;
+
+create event update_expired_discounts on schedule
+    every '1' DAY
+        starts '2025-04-20 00:00:00'
+    enable
+    do
+    BEGIN
+        UPDATE discounts
+        SET is_active = FALSE
+        WHERE end_date < NOW() AND is_active = TRUE;
+    END;
 
 
