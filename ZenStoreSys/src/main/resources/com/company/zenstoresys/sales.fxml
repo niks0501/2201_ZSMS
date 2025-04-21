@@ -101,7 +101,7 @@
                   <ListView id="productsListView" fx:id="productsListView" layoutX="659.0" layoutY="114.0" prefHeight="253.0" prefWidth="357.0" />
                   <Pane fx:id="cameraFrame" layoutX="658.0" layoutY="114.0" prefHeight="253.0" prefWidth="357.0" visible="false">
                      <children>
-                        <ImageView fx:id="pictureDialog" fitHeight="218.0" fitWidth="319.0" layoutX="14.0" layoutY="13.0" pickOnBounds="true" preserveRatio="true" />
+                        <ImageView fx:id="pictureDialog" fitHeight="234.0" fitWidth="325.0" layoutX="18.0" layoutY="10.0" pickOnBounds="true" preserveRatio="true" />
                      </children>
                   </Pane>
                   <MFXRadioButton id="applyDiscBtn" fx:id="applyDiscBtn" layoutX="515.0" layoutY="59.0" text="Apply Discounts">
@@ -119,6 +119,16 @@
                         <Font name="Open Sans Bold" size="16.0" />
                      </font>
                   </MFXTextField>
+                  <MFXProgressSpinner fx:id="cameraLoadingSpinner" layoutX="806.0" layoutY="216.0" progress="0.0" visible="false" />
+                  <MFXButton fx:id="btnClearTable" buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" depthLevel="LEVEL1" layoutX="457.0" layoutY="52.0" prefHeight="32.0" prefWidth="50.0" style="-fx-background-color: transparent;">
+                     <graphic>
+                        <ImageView fitHeight="21.0" fitWidth="22.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../img/reload.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </MFXButton>
                </children>
             </Pane>
          </children>

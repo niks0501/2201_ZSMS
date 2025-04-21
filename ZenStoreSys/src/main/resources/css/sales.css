@@ -199,3 +199,7 @@
 .mfx-radio-button:selected .radio {
     -fx-stroke: -mfx-charcoal;
 }
+
+.flying-item {
+    -fx-font-size: 14px;
+}

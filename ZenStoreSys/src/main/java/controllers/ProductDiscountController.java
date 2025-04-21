@@ -6,11 +6,14 @@ import io.github.palexdev.materialfx.controls.MFXDatePicker;
 import io.github.palexdev.materialfx.controls.MFXRadioButton;
 import io.github.palexdev.materialfx.controls.MFXTextField;
 import javafx.animation.*;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
@@ -19,13 +22,14 @@ import javafx.util.Duration;
 import javafx.util.StringConverter;
 import other_classes.DBConnect;
 import table_models.Category;
+import table_models.Discount;
 import table_models.Product;
 
+import java.math.BigDecimal;
 import java.net.URL;
-import java.sql.CallableStatement;
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ResourceBundle;
 
 public class ProductDiscountController implements Initializable {
@@ -49,10 +53,10 @@ public class ProductDiscountController implements Initializable {
     private Button btnPullSide;
 
     @FXML
-    private MFXComboBox<?> categoryCb;
+    private MFXComboBox<Category> categoryCb;
 
     @FXML
-    private TableColumn<?, ?> categoryColumn;
+    private TableColumn<Discount, String> categoryColumn;
 
     @FXML
     private ListView<?> categoryListView;
@@ -61,31 +65,31 @@ public class ProductDiscountController implements Initializable {
     private MFXTextField categorySearchFld;
 
     @FXML
-    private TableColumn<?, ?> discountIdColumn;
+    private TableColumn<Discount, Integer> discountIdColumn;
 
     @FXML
     private Pane discountPane;
 
     @FXML
-    private TableView<?> discountTbl;
+    private TableView<Discount> discountTbl;
 
     @FXML
-    private MFXComboBox<?> discountTypeCb;
+    private MFXComboBox<String> discountTypeCb;
 
     @FXML
-    private TableColumn<?, ?> discountTypeColumn;
+    private TableColumn<Discount, String> discountTypeColumn;
 
     @FXML
-    private TableColumn<?, ?> discountValColumn;
+    private TableColumn<Discount, BigDecimal> discountValColumn;
 
     @FXML
     private MFXDatePicker endDate;
 
     @FXML
-    private TableColumn<?, ?> endDateColumn;
+    private TableColumn<Discount, LocalDate> endDateColumn;
 
     @FXML
-    private TableColumn<?, ?> minQtyColumn;
+    private TableColumn<Discount, Integer> minQtyColumn;
 
     @FXML
     private MFXTextField minQtyFld;
@@ -94,7 +98,7 @@ public class ProductDiscountController implements Initializable {
     private ImageView searchImg1;
 
     @FXML
-    private TableColumn<?, ?> productNameColumn;
+    private TableColumn<Discount, String> productNameColumn;
 
     @FXML
     private MFXTextField productSearchFld;
@@ -112,13 +116,13 @@ public class ProductDiscountController implements Initializable {
     private MFXDatePicker startDate;
 
     @FXML
-    private TableColumn<?, ?> startDateColumn;
+    private TableColumn<Discount, LocalDate> startDateColumn;
 
     @FXML
-    private TableColumn<?, ?> statusColumn;
+    private TableColumn<Discount, String> statusColumn;
 
     @FXML
-    private MFXComboBox<?> productCb;
+    private MFXComboBox<Product> productCb;
 
     @FXML
     private MFXRadioButton toggleByCategory;
@@ -140,57 +144,160 @@ public class ProductDiscountController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         setupWindowControls();
         initializeDataComponents();
+        setupShowColumnsBtn();
 
         // Set up Add Discount button functionality
         btnAddDisc.setOnAction(event -> addDiscount());
+
+        // Initialize the discounts table
+        setupDiscountsTable();
+        loadDiscounts();
+    }
+
+    private void setupDiscountsTable() {
+        discountIdColumn.setCellValueFactory(new PropertyValueFactory<>("discountId"));
+        productNameColumn.setCellValueFactory(new PropertyValueFactory<>("productName"));
+        categoryColumn.setCellValueFactory(new PropertyValueFactory<>("categoryName"));
+        discountTypeColumn.setCellValueFactory(new PropertyValueFactory<>("discountType"));
+        discountValColumn.setCellValueFactory(new PropertyValueFactory<>("discountValue"));
+        minQtyColumn.setCellValueFactory(new PropertyValueFactory<>("minQuantity"));
+        startDateColumn.setCellValueFactory(new PropertyValueFactory<>("startDate"));
+        endDateColumn.setCellValueFactory(new PropertyValueFactory<>("endDate"));
+        statusColumn.setCellValueFactory(new PropertyValueFactory<>("statusText"));
+
+        // Format date columns
+        startDateColumn.setCellFactory(column -> new TableCell<Discount, LocalDate>() {
+            @Override
+            protected void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+
+                if (empty || date == null) {
+                    setText(null);
+                } else {
+                    setText(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                }
+            }
+        });
+
+        endDateColumn.setCellFactory(column -> new TableCell<Discount, LocalDate>() {
+            @Override
+            protected void updateItem(LocalDate date, boolean empty) {
+                super.updateItem(date, empty);
+
+                if (empty || date == null) {
+                    setText(null);
+                } else {
+                    setText(date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+                }
+            }
+        });
+
+        // Style the status column
+        statusColumn.setCellFactory(column -> new TableCell<Discount, String>() {
+            @Override
+            protected void updateItem(String status, boolean empty) {
+                super.updateItem(status, empty);
+
+                if (empty || status == null) {
+                    setText(null);
+                    setStyle("");
+                } else {
+                    setText(status);
+                    if (status.equals("Active")) {
+                        setStyle("-fx-text-fill: #4CAF50; -fx-font-weight: bold;");
+                    } else {
+                        setStyle("-fx-text-fill: #F44336; -fx-font-weight: bold;");
+                    }
+                }
+            }
+        });
+    }
+
+    private void loadDiscounts() {
+        ObservableList<Discount> discounts = FXCollections.observableArrayList();
+
+        try (Connection conn = DBConnect.getConnection();
+             java.sql.PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT d.discount_id, d.product_id, p.name AS product_name, " +
+                             "d.category_id, c.category_name, d.discount_type, d.discount_value, " +
+                             "d.min_quantity, d.start_date, d.end_date, d.is_active " +
+                             "FROM discounts d " +
+                             "LEFT JOIN products p ON d.product_id = p.product_id " +
+                             "LEFT JOIN categories c ON d.category_id = c.category_id " +
+                             "ORDER BY d.discount_id ASC")) {
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                discounts.add(new Discount(
+                        rs.getInt("discount_id"),
+                        rs.getObject("product_id") != null ? rs.getInt("product_id") : null,
+                        rs.getString("product_name"),
+                        rs.getObject("category_id") != null ? rs.getInt("category_id") : null,
+                        rs.getString("category_name"),
+                        rs.getString("discount_type"),
+                        rs.getBigDecimal("discount_value"),
+                        rs.getInt("min_quantity"),
+                        rs.getDate("start_date").toLocalDate(),
+                        rs.getDate("end_date").toLocalDate(),
+                        rs.getBoolean("is_active")
+                ));
+            }
+
+            discountTbl.setItems(discounts);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showAlert("Error", "Failed to load discounts: " + e.getMessage());
+        }
     }
 
     private void addDiscount() {
         try {
-            // Validate inputs
-            String discountType = (String) discountTypeCb.getValue();
-            if (discountType == null || discountType.isEmpty()) {
+            // Get discount type
+            String discountType = discountTypeCb.getValue();
+            if (discountType == null) {
                 showAlert("Validation Error", "Please select a discount type");
                 return;
             }
 
+            // Validate discount value
             String valueText = valueFld.getText();
             if (valueText == null || valueText.trim().isEmpty()) {
                 showAlert("Validation Error", "Please enter a discount value");
                 return;
             }
 
-            // Parse discount value
-            double discountValue;
+            BigDecimal discountValue;
             try {
-                discountValue = Double.parseDouble(valueText);
-                if (discountValue <= 0) {
+                discountValue = new BigDecimal(valueText);
+                if (discountValue.compareTo(BigDecimal.ZERO) <= 0) {
                     showAlert("Validation Error", "Discount value must be greater than zero");
                     return;
                 }
 
-                // For percentage, ensure it's not over 100%
-                if (discountType.equals("PERCENTAGE") && discountValue > 100) {
+                // For percentage discounts, ensure value is <= 100
+                if (discountType.equals("PERCENTAGE") && discountValue.compareTo(new BigDecimal("100")) > 0) {
                     showAlert("Validation Error", "Percentage discount cannot exceed 100%");
                     return;
                 }
             } catch (NumberFormatException e) {
-                showAlert("Validation Error", "Invalid discount value");
+                showAlert("Validation Error", "Please enter a valid numeric discount value");
                 return;
             }
 
-            // Parse minimum quantity
+            // Validate min quantity
             int minQuantity = 1; // Default value
             String minQtyText = minQtyFld.getText();
             if (minQtyText != null && !minQtyText.trim().isEmpty()) {
                 try {
                     minQuantity = Integer.parseInt(minQtyText);
-                    if (minQuantity <= 0) {
-                        showAlert("Validation Error", "Minimum quantity must be greater than zero");
+                    if (minQuantity < 1) {
+                        showAlert("Validation Error", "Minimum quantity must be at least 1");
                         return;
                     }
                 } catch (NumberFormatException e) {
-                    showAlert("Validation Error", "Invalid minimum quantity");
+                    showAlert("Validation Error", "Please enter a valid integer for minimum quantity");
                     return;
                 }
             }
@@ -207,30 +314,30 @@ public class ProductDiscountController implements Initializable {
             }
 
             if (startDate.getValue().isAfter(endDate.getValue())) {
-                showAlert("Validation Error", "Start date must be before or equal to end date");
+                showAlert("Validation Error", "Start date cannot be after end date");
                 return;
             }
 
-            // Determine if we're using product or category discount based on which toggle is selected
+            // Determine if we're using product or category discount
             Integer productId = null;
             Integer categoryId = null;
 
             if (toggleByProduct.isSelected()) {
-                Product selectedProduct = (Product) productCb.getValue();
+                Product selectedProduct = productCb.getValue();
                 if (selectedProduct == null) {
                     showAlert("Validation Error", "Please select a product");
                     return;
                 }
                 productId = selectedProduct.getProductId();
             } else if (toggleByCategory.isSelected()) {
-                Category selectedCategory = (Category) categoryCb.getValue();
+                Category selectedCategory = categoryCb.getValue();
                 if (selectedCategory == null) {
                     showAlert("Validation Error", "Please select a category");
                     return;
                 }
                 categoryId = selectedCategory.getId();
             } else {
-                showAlert("Validation Error", "Please select discount type (Product or Category)");
+                showAlert("Validation Error", "Please select either product or category mode");
                 return;
             }
 
@@ -238,41 +345,39 @@ public class ProductDiscountController implements Initializable {
             java.sql.Date sqlStartDate = java.sql.Date.valueOf(startDate.getValue());
             java.sql.Date sqlEndDate = java.sql.Date.valueOf(endDate.getValue());
 
-            // Insert into database
+            // Insert into database using stored procedure
             try (Connection conn = DBConnect.getConnection();
-                 CallableStatement stmt = conn.prepareCall("{CALL sp_insert_discount(?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                 CallableStatement cstmt = conn.prepareCall("{CALL sp_insert_discount(?, ?, ?, ?, ?, ?, ?, ?)}")) {
 
-                // Set parameters
-                stmt.setObject(1, productId);
-                stmt.setObject(2, categoryId);
-                stmt.setString(3, discountType);
-                stmt.setDouble(4, discountValue);
-                stmt.setInt(5, minQuantity);
-                stmt.setDate(6, sqlStartDate);
-                stmt.setDate(7, sqlEndDate);
-                stmt.registerOutParameter(8, Types.BOOLEAN);
+                cstmt.setObject(1, productId);
+                cstmt.setObject(2, categoryId);
+                cstmt.setString(3, discountType);
+                cstmt.setBigDecimal(4, discountValue);
+                cstmt.setInt(5, minQuantity);
+                cstmt.setDate(6, sqlStartDate);
+                cstmt.setDate(7, sqlEndDate);
+                cstmt.registerOutParameter(8, Types.BOOLEAN);
 
-                // Execute the stored procedure
-                stmt.execute();
+                cstmt.execute();
 
-                // Get result
-                boolean success = stmt.getBoolean(8);
+                boolean success = cstmt.getBoolean(8);
 
                 if (success) {
-                    // Show success message
-                    showSuccessAlert("Success", "Discount added successfully");
+                    // Show success notification
+                    showSuccessAlert("", "Discount added successfully!");
 
                     // Clear form fields
                     clearFormFields();
+
+                    // Reload discounts table
+                    loadDiscounts();
                 } else {
                     showAlert("Error", "Failed to add discount");
                 }
-
-            } catch (SQLException e) {
-                e.printStackTrace();
-                showAlert("Database Error", "Could not add discount: " + e.getMessage());
             }
-
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showAlert("Error", "Database error: " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
             showAlert("Error", "An unexpected error occurred: " + e.getMessage());
@@ -303,6 +408,8 @@ public class ProductDiscountController implements Initializable {
 
         // Set up search functionality
         setupSearchFields();
+
+
     }
 
     private void setupSearchFields() {
@@ -316,6 +423,107 @@ public class ProductDiscountController implements Initializable {
         MFXTextField categorySearch = (MFXTextField) categorySearchFld;
         categorySearch.textProperty().addListener((observable, oldValue, newValue) -> {
             filterCategoryListView(newValue);
+        });
+
+        // Add listener for the main search field
+        searchFld.textProperty().addListener((observable, oldValue, newValue) -> {
+            filterDiscountTable(newValue);
+        });
+    }
+
+    private void filterDiscountTable(String searchText) {
+        if (searchText == null || searchText.isEmpty()) {
+            // If search is empty, reset the table and show all columns
+            loadDiscounts();
+            resetColumnVisibility();
+            return;
+        }
+
+        // Handle special keywords for column visibility
+        if (searchText.equalsIgnoreCase("Product")) {
+            productNameColumn.setVisible(true);
+            categoryColumn.setVisible(false);
+            loadDiscounts(); // Reload all discounts but with modified columns
+            return;
+        } else if (searchText.equalsIgnoreCase("Category")) {
+            productNameColumn.setVisible(false);
+            categoryColumn.setVisible(true);
+            loadDiscounts(); // Reload all discounts but with modified columns
+            return;
+        } else {
+            // Reset columns for other searches
+            resetColumnVisibility();
+        }
+
+        // Filter the table based on search text
+        ObservableList<Discount> allDiscounts = FXCollections.observableArrayList();
+        ObservableList<Discount> filteredDiscounts = FXCollections.observableArrayList();
+
+        try (Connection conn = DBConnect.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(
+                     "SELECT d.discount_id, d.product_id, p.name AS product_name, " +
+                             "d.category_id, c.category_name, d.discount_type, d.discount_value, " +
+                             "d.min_quantity, d.start_date, d.end_date, d.is_active " +
+                             "FROM discounts d " +
+                             "LEFT JOIN products p ON d.product_id = p.product_id " +
+                             "LEFT JOIN categories c ON d.category_id = c.category_id " +
+                             "ORDER BY d.discount_id ASC")) {
+
+            ResultSet rs = stmt.executeQuery();
+
+            while (rs.next()) {
+                Discount discount = new Discount(
+                        rs.getInt("discount_id"),
+                        rs.getObject("product_id") != null ? rs.getInt("product_id") : null,
+                        rs.getString("product_name"),
+                        rs.getObject("category_id") != null ? rs.getInt("category_id") : null,
+                        rs.getString("category_name"),
+                        rs.getString("discount_type"),
+                        rs.getBigDecimal("discount_value"),
+                        rs.getInt("min_quantity"),
+                        rs.getDate("start_date").toLocalDate(),
+                        rs.getDate("end_date").toLocalDate(),
+                        rs.getBoolean("is_active")
+                );
+                allDiscounts.add(discount);
+            }
+
+            // Filter the discounts based on search text
+            String lowerCaseSearch = searchText.toLowerCase();
+            for (Discount discount : allDiscounts) {
+                // Check if any field matches the search text
+                boolean matchesProduct = discount.getProductName() != null &&
+                        discount.getProductName().toLowerCase().contains(lowerCaseSearch);
+                boolean matchesCategory = discount.getCategoryName() != null &&
+                        discount.getCategoryName().toLowerCase().contains(lowerCaseSearch);
+                boolean matchesType = discount.getDiscountType() != null &&
+                        discount.getDiscountType().toLowerCase().contains(lowerCaseSearch);
+
+                if (matchesProduct || matchesCategory || matchesType) {
+                    filteredDiscounts.add(discount);
+                }
+            }
+
+            discountTbl.setItems(filteredDiscounts);
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showAlert("Error", "Failed to filter discounts: " + e.getMessage());
+        }
+    }
+
+    private void resetColumnVisibility() {
+        // Reset all columns to their default visibility
+        productNameColumn.setVisible(true);
+        categoryColumn.setVisible(true);
+    }
+
+    private void setupShowColumnsBtn() {
+        showColumnsBtn.selectedProperty().addListener((observable, oldValue, newValue) -> {
+            discountValColumn.setVisible(newValue);
+            minQtyColumn.setVisible(newValue);
+            startDateColumn.setVisible(newValue);
+            endDateColumn.setVisible(newValue);
         });
     }
 
@@ -432,42 +640,42 @@ public class ProductDiscountController implements Initializable {
 
 
                 // Create fade out transitions
-                FadeTransition fadeOutCategory = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeOutCategory = new FadeTransition(Duration.millis(150));
                 fadeOutCategory.setFromValue(1);
                 fadeOutCategory.setToValue(0);
                 fadeOutCategory.setNode(categoryListView);
-                fadeOutCategory.setInterpolator(Interpolator.EASE_IN);
+                fadeOutCategory.setInterpolator(Interpolator.EASE_BOTH);
 
-                FadeTransition fadeOutCategorySearch = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeOutCategorySearch = new FadeTransition(Duration.millis(150));
                 fadeOutCategorySearch.setFromValue(1);
                 fadeOutCategorySearch.setToValue(0);
                 fadeOutCategorySearch.setNode(categorySearchFld);
-                fadeOutCategorySearch.setInterpolator(Interpolator.EASE_IN);
+                fadeOutCategorySearch.setInterpolator(Interpolator.EASE_BOTH);
 
-                FadeTransition fadeOutCategoryCb = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeOutCategoryCb = new FadeTransition(Duration.millis(150));
                 fadeOutCategoryCb.setFromValue(1);
                 fadeOutCategoryCb.setToValue(0);
                 fadeOutCategoryCb.setNode(categoryCb);
-                fadeOutCategoryCb.setInterpolator(Interpolator.EASE_IN);
+                fadeOutCategoryCb.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Create fade in transitions
-                FadeTransition fadeInProducts = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInProducts = new FadeTransition(Duration.millis(150));
                 fadeInProducts.setFromValue(0);
                 fadeInProducts.setToValue(1);
                 fadeInProducts.setNode(productsListView);
-                fadeInProducts.setInterpolator(Interpolator.EASE_OUT);
+                fadeInProducts.setInterpolator(Interpolator.EASE_BOTH);
 
-                FadeTransition fadeInProductSearch = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInProductSearch = new FadeTransition(Duration.millis(150));
                 fadeInProductSearch.setFromValue(0);
                 fadeInProductSearch.setToValue(1);
                 fadeInProductSearch.setNode(productSearchFld);
-                fadeInProductSearch.setInterpolator(Interpolator.EASE_OUT);
+                fadeInProductSearch.setInterpolator(Interpolator.EASE_BOTH);
 
-                FadeTransition fadeInProductCb = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInProductCb = new FadeTransition(Duration.millis(150));
                 fadeInProductCb.setFromValue(0);
                 fadeInProductCb.setToValue(1);
                 fadeInProductCb.setNode(productCb);
-                fadeInProductCb.setInterpolator(Interpolator.EASE_OUT);
+                fadeInProductCb.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Group fade out and fade in transitions
                 ParallelTransition parallelFadeOut = new ParallelTransition(
@@ -500,42 +708,42 @@ public class ProductDiscountController implements Initializable {
                 clearFormFields();
 
                 // Create fade out transitions
-                FadeTransition fadeOutProducts = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeOutProducts = new FadeTransition(Duration.millis(150));
                 fadeOutProducts.setFromValue(1);
                 fadeOutProducts.setToValue(0);
                 fadeOutProducts.setNode(productsListView);
-                fadeOutProducts.setInterpolator(Interpolator.EASE_IN);
+                fadeOutProducts.setInterpolator(Interpolator.EASE_BOTH);
 
-                FadeTransition fadeOutProductSearch = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeOutProductSearch = new FadeTransition(Duration.millis(150));
                 fadeOutProductSearch.setFromValue(1);
                 fadeOutProductSearch.setToValue(0);
                 fadeOutProductSearch.setNode(productSearchFld);
-                fadeOutProductSearch.setInterpolator(Interpolator.EASE_IN);
+                fadeOutProductSearch.setInterpolator(Interpolator.EASE_BOTH);
 
-                FadeTransition fadeOutProductCb = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeOutProductCb = new FadeTransition(Duration.millis(150));
                 fadeOutProductCb.setFromValue(1);
                 fadeOutProductCb.setToValue(0);
                 fadeOutProductCb.setNode(productCb);
-                fadeOutProductCb.setInterpolator(Interpolator.EASE_IN);
+                fadeOutProductCb.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Create fade in transitions
-                FadeTransition fadeInCategory = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInCategory = new FadeTransition(Duration.millis(150));
                 fadeInCategory.setFromValue(0);
                 fadeInCategory.setToValue(1);
                 fadeInCategory.setNode(categoryListView);
-                fadeInCategory.setInterpolator(Interpolator.EASE_OUT);
+                fadeInCategory.setInterpolator(Interpolator.EASE_BOTH);
 
-                FadeTransition fadeInCategorySearch = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInCategorySearch = new FadeTransition(Duration.millis(150));
                 fadeInCategorySearch.setFromValue(0);
                 fadeInCategorySearch.setToValue(1);
                 fadeInCategorySearch.setNode(categorySearchFld);
-                fadeInCategorySearch.setInterpolator(Interpolator.EASE_OUT);
+                fadeInCategorySearch.setInterpolator(Interpolator.EASE_BOTH);
 
-                FadeTransition fadeInCategoryCb = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInCategoryCb = new FadeTransition(Duration.millis(150));
                 fadeInCategoryCb.setFromValue(0);
                 fadeInCategoryCb.setToValue(1);
                 fadeInCategoryCb.setNode(categoryCb);
-                fadeInCategoryCb.setInterpolator(Interpolator.EASE_OUT);
+                fadeInCategoryCb.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Parallel fade out transitions
                 ParallelTransition parallelFadeOut = new ParallelTransition(
@@ -563,6 +771,7 @@ public class ProductDiscountController implements Initializable {
             }
         });
     }
+
 
     private void loadCategoriesForComboBox(MFXComboBox<Category> comboBox) {
         try {
@@ -754,27 +963,39 @@ public class ProductDiscountController implements Initializable {
     private void setupSlidePanelAnimation() {
         btnPullSide.setOnAction(event -> {
             if (!discountPane.isVisible()) {
-                // Show discount pane
+                // Prepare to show discount pane
                 discountPane.setVisible(true);
 
+                // Reset opacities for fade-in elements
+                toggleByProduct.setOpacity(0);
+                toggleByCategory.setOpacity(0);
+                productSearchFld.setOpacity(0);
+                categorySearchFld.setOpacity(0);
+                productsListView.setOpacity(0);
+                categoryListView.setOpacity(0);
+                searchImg2.setOpacity(0);
+
                 // Setup slide-in animation
-                TranslateTransition slideIn = new TranslateTransition(Duration.millis(350), discountPane);
+                TranslateTransition slideIn = new TranslateTransition(Duration.millis(150), discountPane);
                 slideIn.setFromX(-discountPane.getPrefWidth());
                 slideIn.setToX(0);
-                slideIn.setInterpolator(Interpolator.EASE_OUT);
+                slideIn.setInterpolator(Interpolator.EASE_BOTH);
 
-                // Setup fade-out animation for table elements
-                FadeTransition fadeOutTable = new FadeTransition(Duration.millis(250));
+                // Setup fade-out for table elements
+                FadeTransition fadeOutTable = new FadeTransition(Duration.millis(150));
                 fadeOutTable.setFromValue(1);
                 fadeOutTable.setToValue(0);
-                fadeOutTable.setInterpolator(Interpolator.EASE_OUT);
                 fadeOutTable.setNode(discountTbl);
 
-                // Setup fade-out for search elements and show columns button
                 FadeTransition fadeOutSearchImg1 = new FadeTransition(Duration.millis(250));
                 fadeOutSearchImg1.setFromValue(1);
                 fadeOutSearchImg1.setToValue(0);
                 fadeOutSearchImg1.setNode(searchImg1);
+
+                FadeTransition fadeOutSearchImg2 = new FadeTransition(Duration.millis(250));
+                fadeOutSearchImg2.setFromValue(1);
+                fadeOutSearchImg2.setToValue(0);
+                fadeOutSearchImg2.setNode(searchImg2);
 
                 FadeTransition fadeOutSearchFld = new FadeTransition(Duration.millis(250));
                 fadeOutSearchFld.setFromValue(1);
@@ -786,27 +1007,72 @@ public class ProductDiscountController implements Initializable {
                 fadeOutColumns.setToValue(0);
                 fadeOutColumns.setNode(showColumnsBtn);
 
-                // Create parallel animation for fading out elements
+                // Parallel fade-out for table elements
                 ParallelTransition fadeOutAll = new ParallelTransition(
-                        fadeOutTable, fadeOutSearchImg1, fadeOutSearchFld, fadeOutColumns
+                        fadeOutTable, fadeOutSearchImg1, fadeOutSearchImg2, fadeOutSearchFld, fadeOutColumns
                 );
 
-                // Create the sequence
-                SequentialTransition sequence = new SequentialTransition();
-                sequence.getChildren().addAll(fadeOutAll, slideIn);
+                // Setup fade-in for discount pane elements
+                FadeTransition fadeInToggleProduct = new FadeTransition(Duration.millis(150));
+                fadeInToggleProduct.setFromValue(0);
+                fadeInToggleProduct.setToValue(1);
+                fadeInToggleProduct.setNode(toggleByProduct);
+
+                FadeTransition fadeInToggleCategory = new FadeTransition(Duration.millis(150));
+                fadeInToggleCategory.setFromValue(0);
+                fadeInToggleCategory.setToValue(1);
+                fadeInToggleCategory.setNode(toggleByCategory);
+
+                FadeTransition fadeInProductSearch = new FadeTransition(Duration.millis(150));
+                fadeInProductSearch.setFromValue(0);
+                fadeInProductSearch.setToValue(1);
+                fadeInProductSearch.setNode(productSearchFld);
+
+                FadeTransition fadeInCategorySearch = new FadeTransition(Duration.millis(150));
+                fadeInCategorySearch.setFromValue(0);
+                fadeInCategorySearch.setToValue(1);
+                fadeInCategorySearch.setNode(categorySearchFld);
+
+                FadeTransition fadeInProductsList = new FadeTransition(Duration.millis(150));
+                fadeInProductsList.setFromValue(0);
+                fadeInProductsList.setToValue(1);
+                fadeInProductsList.setNode(productsListView);
+
+                FadeTransition fadeInCategoryList = new FadeTransition(Duration.millis(150));
+                fadeInCategoryList.setFromValue(0);
+                fadeInCategoryList.setToValue(1);
+                fadeInCategoryList.setNode(categoryListView);
+
+                FadeTransition fadeInSearchImg2 = new FadeTransition(Duration.millis(150));
+                fadeInSearchImg2.setFromValue(0);
+                fadeInSearchImg2.setToValue(1);
+                fadeInSearchImg2.setNode(searchImg2);
+
+                // Parallel fade-in for discount pane elements
+                ParallelTransition fadeInAll = new ParallelTransition(
+                        fadeInToggleProduct, fadeInToggleCategory, fadeInProductSearch,
+                        fadeInCategorySearch, fadeInProductsList, fadeInCategoryList, fadeInSearchImg2
+                );
+
+                // Sequence: fade out table, slide in pane, fade in discount elements
+                SequentialTransition sequence = new SequentialTransition(fadeOutAll, slideIn, fadeInAll);
 
                 sequence.setOnFinished(e -> {
                     // Hide table elements
                     discountTbl.setVisible(false);
                     searchImg1.setVisible(false);
+                    searchImg2.setVisible(false);
                     searchFld.setVisible(false);
                     showColumnsBtn.setVisible(false);
 
-                    // Show discount panel elements
+                    // Show discount pane elements
                     toggleByProduct.setVisible(true);
                     toggleByCategory.setVisible(true);
                     productSearchFld.setVisible(true);
+                    categorySearchFld.setVisible(true);
                     productsListView.setVisible(true);
+                    categoryListView.setVisible(true);
+                    searchImg2.setVisible(true);
 
                     // Set initial toggle state
                     toggleByProduct.setSelected(true);
@@ -815,68 +1081,111 @@ public class ProductDiscountController implements Initializable {
 
                 sequence.play();
             } else {
+                // Reset opacities for fade-in elements
+                discountTbl.setOpacity(0);
+                searchImg1.setOpacity(0);
+                searchImg2.setOpacity(0);
+                searchFld.setOpacity(0);
+                showColumnsBtn.setOpacity(0);
+
                 // Setup slide-out animation
-                TranslateTransition slideOut = new TranslateTransition(Duration.millis(350), discountPane);
+                TranslateTransition slideOut = new TranslateTransition(Duration.millis(150), discountPane);
                 slideOut.setFromX(0);
                 slideOut.setToX(-discountPane.getPrefWidth());
-                slideOut.setInterpolator(Interpolator.EASE_IN);
+                slideOut.setInterpolator(Interpolator.EASE_BOTH);
 
-                // Hide discount panel elements
-                toggleByProduct.setVisible(false);
-                toggleByCategory.setVisible(false);
-                productSearchFld.setVisible(false);
-                productsListView.setVisible(false);
-                categoryListView.setVisible(false);
+                // Setup fade-out for discount pane elements
+                FadeTransition fadeOutToggleProduct = new FadeTransition(Duration.millis(150));
+                fadeOutToggleProduct.setFromValue(1);
+                fadeOutToggleProduct.setToValue(0);
+                fadeOutToggleProduct.setNode(toggleByProduct);
 
-                // Show table elements
-                discountTbl.setVisible(true);
-                searchImg1.setVisible(true);
-                searchImg2.setVisible(true);
-                searchFld.setVisible(true);
-                showColumnsBtn.setVisible(true);
+                FadeTransition fadeOutToggleCategory = new FadeTransition(Duration.millis(250));
+                fadeOutToggleCategory.setFromValue(1);
+                fadeOutToggleCategory.setToValue(0);
+                fadeOutToggleCategory.setNode(toggleByCategory);
 
-                // Setup fade-in animation for table elements
-                FadeTransition fadeInTable = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeOutProductSearch = new FadeTransition(Duration.millis(250));
+                fadeOutProductSearch.setFromValue(1);
+                fadeOutProductSearch.setToValue(0);
+                fadeOutProductSearch.setNode(productSearchFld);
+
+                FadeTransition fadeOutCategorySearch = new FadeTransition(Duration.millis(250));
+                fadeOutCategorySearch.setFromValue(1);
+                fadeOutCategorySearch.setToValue(0);
+                fadeOutCategorySearch.setNode(categorySearchFld);
+
+                FadeTransition fadeOutProductsList = new FadeTransition(Duration.millis(250));
+                fadeOutProductsList.setFromValue(1);
+                fadeOutProductsList.setToValue(0);
+                fadeOutProductsList.setNode(productsListView);
+
+                FadeTransition fadeOutCategoryList = new FadeTransition(Duration.millis(250));
+                fadeOutCategoryList.setFromValue(1);
+                fadeOutCategoryList.setToValue(0);
+                fadeOutCategoryList.setNode(categoryListView);
+
+                FadeTransition fadeOutSearchImg2 = new FadeTransition(Duration.millis(250));
+                fadeOutSearchImg2.setFromValue(1);
+                fadeOutSearchImg2.setToValue(0);
+                fadeOutSearchImg2.setNode(searchImg2);
+
+                // Parallel fade-out for discount pane elements
+                ParallelTransition fadeOutAll = new ParallelTransition(
+                        fadeOutToggleProduct, fadeOutToggleCategory, fadeOutProductSearch,
+                        fadeOutCategorySearch, fadeOutProductsList, fadeOutCategoryList, fadeOutSearchImg2
+                );
+
+                // Setup fade-in for table elements
+                FadeTransition fadeInTable = new FadeTransition(Duration.millis(150));
                 fadeInTable.setFromValue(0);
                 fadeInTable.setToValue(1);
-                fadeInTable.setInterpolator(Interpolator.EASE_OUT);
                 fadeInTable.setNode(discountTbl);
 
-                FadeTransition fadeInSearchImg1 = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInSearchImg1 = new FadeTransition(Duration.millis(150));
                 fadeInSearchImg1.setFromValue(0);
                 fadeInSearchImg1.setToValue(1);
                 fadeInSearchImg1.setNode(searchImg1);
-                fadeInSearchImg1.setInterpolator(Interpolator.EASE_OUT);
 
-                FadeTransition fadeInSearchImg2 = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInSearchImg2 = new FadeTransition(Duration.millis(150));
                 fadeInSearchImg2.setFromValue(0);
                 fadeInSearchImg2.setToValue(1);
                 fadeInSearchImg2.setNode(searchImg2);
-                fadeInSearchImg2.setInterpolator(Interpolator.EASE_OUT);
 
-                FadeTransition fadeInSearchFld = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInSearchFld = new FadeTransition(Duration.millis(150));
                 fadeInSearchFld.setFromValue(0);
                 fadeInSearchFld.setToValue(1);
                 fadeInSearchFld.setNode(searchFld);
-                fadeInSearchFld.setInterpolator(Interpolator.EASE_OUT);
 
-                FadeTransition fadeInColumns = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInColumns = new FadeTransition(Duration.millis(150));
                 fadeInColumns.setFromValue(0);
                 fadeInColumns.setToValue(1);
                 fadeInColumns.setNode(showColumnsBtn);
-                fadeInColumns.setInterpolator(Interpolator.EASE_OUT);
 
-                // Create parallel animation for fading in elements
+                // Parallel fade-in for table elements
                 ParallelTransition fadeInAll = new ParallelTransition(
                         fadeInTable, fadeInSearchImg1, fadeInSearchImg2, fadeInSearchFld, fadeInColumns
                 );
 
-                // Create the sequence
-                SequentialTransition sequence = new SequentialTransition(slideOut);
-                sequence.getChildren().add(fadeInAll);
+                // Sequence: slide out pane, fade out discount elements, fade in table elements
+                SequentialTransition sequence = new SequentialTransition(slideOut, fadeOutAll, fadeInAll);
 
                 sequence.setOnFinished(e -> {
                     discountPane.setVisible(false);
+                    // Ensure table elements are visible
+                    discountTbl.setVisible(true);
+                    searchImg1.setVisible(true);
+                    searchImg2.setVisible(true);
+                    searchFld.setVisible(true);
+                    showColumnsBtn.setVisible(true);
+                    // Ensure discount pane elements are hidden
+                    toggleByProduct.setVisible(false);
+                    toggleByCategory.setVisible(false);
+                    productSearchFld.setVisible(false);
+                    categorySearchFld.setVisible(false);
+                    productsListView.setVisible(false);
+                    categoryListView.setVisible(false);
+                    searchImg2.setVisible(false);
                 });
 
                 sequence.play();
@@ -893,20 +1202,20 @@ public class ProductDiscountController implements Initializable {
                 fadeOutCategory.setFromValue(categoryListView.isVisible() ? 1 : 0);
                 fadeOutCategory.setToValue(0);
                 fadeOutCategory.setNode(categoryListView);
-                fadeOutCategory.setInterpolator(Interpolator.EASE_IN);
+                fadeOutCategory.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Fade out category search field and combo box
                 FadeTransition fadeOutCategorySearch = new FadeTransition(Duration.millis(250));
                 fadeOutCategorySearch.setFromValue(categorySearchFld.isVisible() ? 1 : 0);
                 fadeOutCategorySearch.setToValue(0);
                 fadeOutCategorySearch.setNode(categorySearchFld);
-                fadeOutCategorySearch.setInterpolator(Interpolator.EASE_IN);
+                fadeOutCategorySearch.setInterpolator(Interpolator.EASE_BOTH);
 
                 FadeTransition fadeOutCategoryCb = new FadeTransition(Duration.millis(250));
                 fadeOutCategoryCb.setFromValue(categoryCb.isVisible() ? 1 : 0);
                 fadeOutCategoryCb.setToValue(0);
                 fadeOutCategoryCb.setNode(categoryCb);
-                fadeOutCategoryCb.setInterpolator(Interpolator.EASE_IN);
+                fadeOutCategoryCb.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Parallel fade out transitions
                 ParallelTransition parallelFadeOut = new ParallelTransition(
@@ -914,24 +1223,24 @@ public class ProductDiscountController implements Initializable {
                 );
 
                 // Fade in products list view and related elements
-                FadeTransition fadeInProducts = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInProducts = new FadeTransition(Duration.millis(150));
                 fadeInProducts.setFromValue(0);
                 fadeInProducts.setToValue(1);
                 fadeInProducts.setNode(productsListView);
-                fadeInProducts.setInterpolator(Interpolator.EASE_OUT);
+                fadeInProducts.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Fade in product search field and combo box
-                FadeTransition fadeInProductSearch = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInProductSearch = new FadeTransition(Duration.millis(150));
                 fadeInProductSearch.setFromValue(0);
                 fadeInProductSearch.setToValue(1);
                 fadeInProductSearch.setNode(productSearchFld);
-                fadeInProductSearch.setInterpolator(Interpolator.EASE_OUT);
+                fadeInProductSearch.setInterpolator(Interpolator.EASE_BOTH);
 
-                FadeTransition fadeInProductCb = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInProductCb = new FadeTransition(Duration.millis(150));
                 fadeInProductCb.setFromValue(0);
                 fadeInProductCb.setToValue(1);
                 fadeInProductCb.setNode(productCb);
-                fadeInProductCb.setInterpolator(Interpolator.EASE_OUT);
+                fadeInProductCb.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Parallel fade in transitions
                 ParallelTransition parallelFadeIn = new ParallelTransition(
@@ -963,20 +1272,20 @@ public class ProductDiscountController implements Initializable {
                 fadeOutProducts.setFromValue(productsListView.isVisible() ? 1 : 0);
                 fadeOutProducts.setToValue(0);
                 fadeOutProducts.setNode(productsListView);
-                fadeOutProducts.setInterpolator(Interpolator.EASE_IN);
+                fadeOutProducts.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Fade out product search field and combo box
                 FadeTransition fadeOutProductSearch = new FadeTransition(Duration.millis(250));
                 fadeOutProductSearch.setFromValue(productSearchFld.isVisible() ? 1 : 0);
                 fadeOutProductSearch.setToValue(0);
                 fadeOutProductSearch.setNode(productSearchFld);
-                fadeOutProductSearch.setInterpolator(Interpolator.EASE_IN);
+                fadeOutProductSearch.setInterpolator(Interpolator.EASE_BOTH);
 
                 FadeTransition fadeOutProductCb = new FadeTransition(Duration.millis(250));
                 fadeOutProductCb.setFromValue(productCb.isVisible() ? 1 : 0);
                 fadeOutProductCb.setToValue(0);
                 fadeOutProductCb.setNode(productCb);
-                fadeOutProductCb.setInterpolator(Interpolator.EASE_IN);
+                fadeOutProductCb.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Parallel fade out transitions
                 ParallelTransition parallelFadeOut = new ParallelTransition(
@@ -984,24 +1293,24 @@ public class ProductDiscountController implements Initializable {
                 );
 
                 // Fade in category list view and related elements
-                FadeTransition fadeInCategory = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInCategory = new FadeTransition(Duration.millis(150));
                 fadeInCategory.setFromValue(0);
                 fadeInCategory.setToValue(1);
                 fadeInCategory.setNode(categoryListView);
-                fadeInCategory.setInterpolator(Interpolator.EASE_OUT);
+                fadeInCategory.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Fade in category search field and combo box
-                FadeTransition fadeInCategorySearch = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInCategorySearch = new FadeTransition(Duration.millis(150));
                 fadeInCategorySearch.setFromValue(0);
                 fadeInCategorySearch.setToValue(1);
                 fadeInCategorySearch.setNode(categorySearchFld);
-                fadeInCategorySearch.setInterpolator(Interpolator.EASE_OUT);
+                fadeInCategorySearch.setInterpolator(Interpolator.EASE_BOTH);
 
-                FadeTransition fadeInCategoryCb = new FadeTransition(Duration.millis(350));
+                FadeTransition fadeInCategoryCb = new FadeTransition(Duration.millis(150));
                 fadeInCategoryCb.setFromValue(0);
                 fadeInCategoryCb.setToValue(1);
                 fadeInCategoryCb.setNode(categoryCb);
-                fadeInCategoryCb.setInterpolator(Interpolator.EASE_OUT);
+                fadeInCategoryCb.setInterpolator(Interpolator.EASE_BOTH);
 
                 // Parallel fade in transitions
                 ParallelTransition parallelFadeIn = new ParallelTransition(
