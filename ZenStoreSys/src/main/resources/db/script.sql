@@ -60,6 +60,34 @@ create index category_id
 create index product_id
     on discounts (product_id);
 
+create trigger set_discount_active_on_insert
+    before insert
+    on discounts
+    for each row
+BEGIN
+    IF NEW.start_date > CURRENT_DATE THEN
+        SET NEW.is_active = 0;
+    ELSEIF NEW.start_date <= CURRENT_DATE AND NEW.end_date >= CURRENT_DATE THEN
+        SET NEW.is_active = 1;
+    ELSE
+        SET NEW.is_active = 0;
+    END IF;
+END;
+
+create trigger set_discount_active_on_update
+    before update
+    on discounts
+    for each row
+BEGIN
+    IF NEW.start_date > CURRENT_DATE THEN
+        SET NEW.is_active = 0;
+    ELSEIF NEW.start_date <= CURRENT_DATE AND NEW.end_date >= CURRENT_DATE THEN
+        SET NEW.is_active = 1;
+    ELSE
+        SET NEW.is_active = 0;
+    END IF;
+END;
+
 create table low_stock_alerts
 (
     alert_id    int auto_increment
@@ -148,6 +176,22 @@ BEGIN
         categories c ON p.category_id = c.category_id;
 END;
 
+create procedure GetProductDiscounts()
+BEGIN
+    SELECT 
+        d.product_id,
+        d.category_id,
+        d.discount_type,
+        d.discount_value,
+        d.min_quantity,
+        p.selling_price,
+        p.category_id AS product_category_id
+    FROM discounts d
+    LEFT JOIN products p ON d.product_id = p.product_id OR d.category_id = p.category_id
+    WHERE d.is_active = 1 
+    AND CURRENT_TIMESTAMP BETWEEN d.start_date AND d.end_date;
+END;
+
 create procedure sp_add_category(IN p_category_name varchar(100), OUT p_success tinyint(1))
 BEGIN
     DECLARE EXIT HANDLER FOR 1062 -- Duplicate key error
@@ -178,6 +222,39 @@ END;
 create procedure sp_get_all_categories()
 BEGIN
     SELECT category_id, category_name FROM categories ORDER BY category_id;
+END;
+
+create procedure sp_insert_discount(IN p_product_id int, IN p_category_id int,
+                                    IN p_discount_type enum ('PERCENTAGE', 'FIXED', 'BOGO', 'BULK'),
+                                    IN p_discount_value decimal(10, 2), IN p_min_quantity int, IN p_start_date datetime,
+                                    IN p_end_date datetime, OUT p_success tinyint(1))
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+        BEGIN
+            SET p_success = FALSE;
+        END;
+
+    INSERT INTO discounts (
+        product_id,
+        category_id,
+        discount_type,
+        discount_value,
+        min_quantity,
+        start_date,
+        end_date,
+        is_active
+    ) VALUES (
+                 p_product_id,
+                 p_category_id,
+                 p_discount_type,
+                 p_discount_value,
+                 p_min_quantity,
+                 p_start_date,
+                 p_end_date,
+                 TRUE
+             );
+
+    SET p_success = TRUE;
 END;
 
 create procedure sp_insert_product(IN p_name varchar(255), IN p_category_id int, IN p_cost_price decimal(10, 2),
@@ -226,15 +303,35 @@ BEGIN
     END IF;
 END;
 
-create event update_expired_discounts on schedule
+create event update_discount_active_status on schedule
     every '1' DAY
-        starts '2025-04-20 00:00:00'
+        starts '2025-04-23 00:00:00'
     enable
     do
     BEGIN
-        UPDATE discounts
-        SET is_active = FALSE
-        WHERE end_date < NOW() AND is_active = TRUE;
-    END;
+    -- Activate discounts where start_date is reached and end_date is not passed
+    UPDATE discounts
+    SET is_active = 1
+    WHERE start_date <= CURRENT_DATE
+      AND end_date >= CURRENT_DATE
+      AND is_active = 0;
+
+    -- Deactivate discounts where end_date has passed
+    UPDATE discounts
+    SET is_active = 0
+    WHERE end_date < CURRENT_DATE
+      AND is_active = 1;
+END;
+
+create event update_expired_discounts on schedule
+    every '1' DAY
+        starts '2025-04-23 00:00:00'
+    enable
+    do
+    BEGIN
+    UPDATE discounts 
+    SET is_active = FALSE 
+    WHERE end_date < NOW() AND is_active = TRUE;
+END;
 
 

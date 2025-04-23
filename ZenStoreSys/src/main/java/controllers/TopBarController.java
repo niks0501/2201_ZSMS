@@ -1,10 +1,11 @@
 package controllers;
 
-import javafx.animation.FadeTransition;
-import javafx.animation.Interpolator;
+import javafx.animation.*;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ProgressIndicator;
@@ -25,6 +26,12 @@ public class TopBarController {
 
     private StackPane contentPane;
 
+    @FXML
+    private Button btnDashboard;
+
+    @FXML
+    private Button btnSales;
+
     private volatile boolean isLoading = false; // Track loading state
 
 
@@ -33,6 +40,7 @@ public class TopBarController {
     private void initialize() {
         // Add event handler for product button
         btnProduct.setOnAction(event -> loadProductsView());
+        btnSales.setOnAction(event -> loadSalesView());
 
         // Set up ProductLoadService handlers once and for all
         ProductLoadService productService = ProductLoadService.getInstance();
@@ -68,6 +76,85 @@ public class TopBarController {
     // Method to set the contentPane from DashboardController
     public void setContentPane(StackPane contentPane) {
         this.contentPane = contentPane;
+    }
+
+    @FXML
+    private void loadSalesView() {
+        try {
+            // Create and configure progress indicator
+            ProgressIndicator progressIndicator = new ProgressIndicator();
+            progressIndicator.setMaxSize(100, 100);
+
+            // Add the progress indicator to center of content pane
+            contentPane.getChildren().clear();
+            StackPane loadingPane = new StackPane(progressIndicator);
+            loadingPane.setStyle("-fx-background-color: white;");
+            contentPane.getChildren().add(loadingPane);
+
+            // Create loading animation
+            Timeline loadingAnimation = new Timeline(
+                    new KeyFrame(Duration.ZERO, new KeyValue(progressIndicator.progressProperty(), 0)),
+                    new KeyFrame(Duration.seconds(2), new KeyValue(progressIndicator.progressProperty(), 1, Interpolator.EASE_BOTH))
+            );
+            loadingAnimation.play();
+
+            // Load the sales view in background thread to prevent UI freezing
+            Task<Parent> loadTask = new Task<>() {
+                @Override
+                protected Parent call() throws Exception {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/company/zenstoresys/sales.fxml"));
+                    Parent salesView = loader.load();
+                    salesView.getStylesheets().add(getClass().getResource("/css/sales.css").toExternalForm());
+
+                    // Apply initial state for animation
+                    salesView.setOpacity(0);
+                    return salesView;
+                }
+            };
+
+            loadTask.setOnSucceeded(event -> {
+                Parent salesView = loadTask.getValue();
+
+                // Create fade-in transition
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(600), salesView);
+                fadeIn.setFromValue(0);
+                fadeIn.setToValue(1);
+                fadeIn.setInterpolator(Interpolator.EASE_IN);
+
+                // Switch from loading indicator to the actual view with animation
+                fadeIn.setOnFinished(e -> {
+                    // Ensure any resources are properly managed
+                });
+
+                // Replace loading indicator with sales view and start animation
+                contentPane.getChildren().clear();
+                contentPane.getChildren().add(salesView);
+                fadeIn.play();
+            });
+
+            loadTask.setOnFailed(event -> {
+                Throwable exception = loadTask.getException();
+                exception.printStackTrace();
+
+                // Show error message
+                Label errorLabel = new Label("Error loading Sales view: " + exception.getMessage());
+                errorLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+                contentPane.getChildren().clear();
+                contentPane.getChildren().add(new StackPane(errorLabel));
+            });
+
+            // Start loading in background
+            new Thread(loadTask).start();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+
+            // Show error in UI
+            Label errorLabel = new Label("Error: " + e.getMessage());
+            errorLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
+            contentPane.getChildren().clear();
+            contentPane.getChildren().add(errorLabel);
+        }
     }
 
     private void loadProductsView() {

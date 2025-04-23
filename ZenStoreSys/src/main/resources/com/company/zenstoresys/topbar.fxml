@@ -12,7 +12,7 @@
 
 <HBox id="navigationPane" fx:id="navigationPane" prefHeight="45.0" prefWidth="1080.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.TopBarController">
    <children>
-      <Button alignment="BOTTOM_CENTER" contentDisplay="TOP" mnemonicParsing="false" prefHeight="95.0" prefWidth="122.0" style="-fx-background-color: transparent;" text="Home" textFill="WHITE">
+      <Button id="btnDashboard" fx:id="btnDashboard" alignment="BOTTOM_CENTER" contentDisplay="TOP" mnemonicParsing="false" prefHeight="95.0" prefWidth="122.0" style="-fx-background-color: transparent;" text="Home" textFill="WHITE">
          <HBox.margin>
             <Insets />
          </HBox.margin>
@@ -43,6 +43,18 @@
                   <ImageView fitHeight="37.0" fitWidth="41.0" pickOnBounds="true" preserveRatio="true">
                      <image>
                         <Image url="@../../../img/stock.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <font>
+                  <Font name="Open Sans Bold" size="14.0" />
+               </font>
+            </Button>
+            <Button id="btnSales" fx:id="btnSales" alignment="CENTER" graphicTextGap="20.0" mnemonicParsing="false" prefHeight="38.0" prefWidth="180.0" style="-fx-background-color: transparent;" text="Sales" GridPane.rowIndex="1">
+               <graphic>
+                  <ImageView fitHeight="37.0" fitWidth="41.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../img/acquisition.png" />
                      </image>
                   </ImageView>
                </graphic>

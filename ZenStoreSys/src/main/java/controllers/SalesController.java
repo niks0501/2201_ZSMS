@@ -6,11 +6,7 @@ import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
 import io.github.palexdev.materialfx.controls.*;
 import io.github.palexdev.materialfx.utils.SwingFXUtils;
-import javafx.animation.FadeTransition;
-import javafx.animation.ParallelTransition;
-import javafx.animation.PathTransition;
-import javafx.animation.RotateTransition;
-import javafx.animation.ScaleTransition;
+import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -19,13 +15,11 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.effect.DropShadow;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.MoveTo;
 import javafx.scene.shape.Path;
@@ -45,6 +39,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.*;
+import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -87,6 +82,7 @@ public class SalesController {
     private long lastScanTime = 0;
     private boolean isScanning = false;
     private ScheduledExecutorService scannerExecutor;
+    private double lastProgress = 0.0;
 
     @FXML
     private void initialize() {
@@ -98,6 +94,7 @@ public class SalesController {
 
         toggleMode.setOnAction(event -> toggleMode());
         btnDiscounts.setOnAction(event -> openDiscountsManager());
+        btnCheckout.setOnAction(event -> processCheckout());
 
         saleMainFrame.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (newScene == null) {
@@ -125,6 +122,350 @@ public class SalesController {
         setupProductSelectionHandler();
         setupSearchFilter();
         loadProductsList();
+        setupDiscountButton();
+        setupTableContextMenu();
+        setupProductSelectionHandler();
+        // Add discount column binding
+        discountColumn.setCellValueFactory(cellData ->
+                cellData.getValue().discountProperty());
+
+        // Attach quantity listeners to existing SalesItems
+        for (SalesItem item : salesTbl.getItems()) {
+            item.quantityProperty().addListener((obs, oldVal, newVal) -> {
+                if (applyDiscBtn.isSelected()) {
+                    applyDiscountsToSales();
+                }
+            });
+        }
+
+        // Handle new SalesItems and quantity changes
+        salesTbl.getItems().addListener((javafx.collections.ListChangeListener<SalesItem>) c -> {
+            while (c.next()) {
+                if (c.wasAdded()) {
+                    for (SalesItem item : c.getAddedSubList()) {
+                        // Attach quantity listener for future changes
+                        item.quantityProperty().addListener((obs, oldVal, newVal) -> {
+                            if (applyDiscBtn.isSelected()) {
+                                applyDiscountsToSales();
+                            }
+                        });
+                    }
+                    // Apply discounts immediately if applyDiscBtn is selected
+                    if (applyDiscBtn.isSelected() && !c.getAddedSubList().isEmpty()) {
+                        applyDiscountsToSales();
+                    }
+                }
+            }
+        });
+    }
+
+    private void processCheckout() {
+        if (salesTbl.getItems().isEmpty()) {
+            showNotification("❌ No items to checkout");
+            return;
+        }
+
+        // Get all items from the table
+        List<SalesItem> items = new ArrayList<>(salesTbl.getItems());
+        BigDecimal totalAmount = new BigDecimal(totalAmountFld.getText());
+
+        // Show progress indicator
+        insertionProgress.setVisible(true);
+        insertionProgress.setProgress(0);
+
+        // Process checkout in background thread
+        new Thread(() -> {
+            try (Connection conn = DBConnect.getConnection()) {
+                // Disable auto-commit for transaction
+                conn.setAutoCommit(false);
+
+                try {
+                    int saleId = -1;
+
+                    // First, call stored procedure to insert into sales table
+                    try (CallableStatement stmt = conn.prepareCall("{CALL process_sale(?, ?)}")) {
+                        stmt.setBigDecimal(1, totalAmount);
+                        stmt.registerOutParameter(2, Types.INTEGER);
+                        stmt.execute();
+
+                        saleId = stmt.getInt(2);
+                        if (saleId <= 0) {
+                            throw new SQLException("Failed to get valid sale ID");
+                        }
+                    }
+
+                    updateProgress(0.2); // 20% progress after sales record
+
+                    // Next, insert each item using the stored procedure
+                    try (CallableStatement stmt = conn.prepareCall("{CALL add_sale_item(?, ?, ?, ?, ?)}")) {
+                        double progressStep = 0.8 / items.size(); // Remaining 80% divided by items
+                        double currentProgress = 0.2;
+
+                        for (int i = 0; i < items.size(); i++) {
+                            SalesItem item = items.get(i);
+
+                            // Set parameters for the stored procedure
+                            stmt.setInt(1, saleId);
+                            stmt.setInt(2, item.getProductId());
+                            stmt.setInt(3, item.getQuantity());
+                            stmt.setBigDecimal(4, item.getSubtotal());
+                            stmt.setBigDecimal(5, item.getFinalPrice());
+
+                            // Execute the procedure
+                            stmt.execute();
+
+                            // Update progress
+                            currentProgress += progressStep;
+                            updateProgress(currentProgress);
+                        }
+                    }
+
+                    // Commit transaction
+                    conn.commit();
+                    updateProgress(1.0); // 100% progress
+
+                    // Clear sales table on success
+                    Platform.runLater(() -> {
+                        salesTbl.getItems().clear();
+                        updateTotalAmount();
+                        showNotification("✅ Sale completed successfully");
+
+                        // Hide progress indicator after delay
+                        new Timeline(new KeyFrame(Duration.seconds(1), e ->
+                                insertionProgress.setVisible(false))).play();
+                    });
+
+                } catch (Exception e) {
+                    // Rollback on error
+                    conn.rollback();
+                    e.printStackTrace();
+
+                    Platform.runLater(() -> {
+                        showNotification("❌ Error processing sale: " + e.getMessage());
+                        insertionProgress.setVisible(false);
+                    });
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    showNotification("❌ Database connection error");
+                    insertionProgress.setVisible(false);
+                });
+            }
+        }).start();
+    }
+
+    private void updateProgress(double progress) {
+        // Create timeline for smooth animation
+        Timeline timeline = new Timeline();
+        KeyValue keyValue = new KeyValue(
+                insertionProgress.progressProperty(),
+                progress,
+                Interpolator.EASE_BOTH // Smooth acceleration and deceleration
+        );
+
+        // Duration based on the progress difference for consistent speed
+        double progressDifference = Math.abs(progress - lastProgress);
+        Duration duration = Duration.millis(300 * progressDifference);
+
+        KeyFrame keyFrame = new KeyFrame(duration, keyValue);
+        timeline.getKeyFrames().add(keyFrame);
+
+        // Play the animation
+        Platform.runLater(() -> {
+            timeline.play();
+            lastProgress = progress;
+        });
+    }
+
+    private void setupDiscountButton() {
+        applyDiscBtn.setOnAction(event -> {
+            if (applyDiscBtn.isSelected()) {
+                applyDiscountsToSales();
+            } else {
+                for (SalesItem item : salesTbl.getItems()) {
+                    item.setDiscount(BigDecimal.ZERO);
+                }
+                updateDiscountProgress(0.0);
+                salesTbl.refresh();
+                updateTotalAmount();
+                showNotification("🔔 Discounts removed");
+            }
+        });
+    }
+
+    private void applyDiscountsToSales() {
+        try (Connection conn = DBConnect.getConnection()) {
+            // Set to store category IDs with active discounts
+            Set<Integer> discountedCategoryIds = new HashSet<>();
+
+            // Fetch category IDs with active discounts
+            try (PreparedStatement catStmt = conn.prepareStatement(
+                    "SELECT DISTINCT category_id FROM discounts " +
+                            "WHERE is_active = 1 AND CURRENT_TIMESTAMP BETWEEN start_date AND end_date " +
+                            "AND category_id IS NOT NULL")) {
+                ResultSet catRs = catStmt.executeQuery();
+                while (catRs.next()) {
+                    discountedCategoryIds.add(catRs.getInt("category_id"));
+                }
+            }
+
+            // Map to store product ID to category ID
+            Map<Integer, Integer> productCategoryMap = new HashMap<>();
+            try (PreparedStatement prodStmt = conn.prepareStatement(
+                    "SELECT product_id, category_id FROM products")) {
+                ResultSet prodRs = prodStmt.executeQuery();
+                while (prodRs.next()) {
+                    productCategoryMap.put(prodRs.getInt("product_id"), prodRs.getInt("category_id"));
+                }
+            }
+
+            // Fetch discounts
+            try (PreparedStatement stmt = conn.prepareStatement(
+                    "SELECT d.product_id, d.category_id, d.discount_type, d.discount_value, d.min_quantity, " +
+                            "p.selling_price, p.category_id AS product_category_id " +
+                            "FROM discounts d " +
+                            "LEFT JOIN products p ON d.product_id = p.product_id OR d.category_id = p.category_id " +
+                            "WHERE d.is_active = 1 AND CURRENT_TIMESTAMP BETWEEN d.start_date AND d.end_date")) {
+
+                ResultSet rs = stmt.executeQuery();
+                Map<Integer, Map<String, BigDecimal>> discountMap = new HashMap<>();
+                Map<Integer, Integer> minQuantityMap = new HashMap<>();
+
+                while (rs.next()) {
+                    int productId = rs.getInt("product_id");
+                    int categoryId = rs.getInt("category_id");
+                    String discountType = rs.getString("discount_type");
+                    BigDecimal discountValue = rs.getBigDecimal("discount_value");
+                    int minQuantity = rs.getInt("min_quantity");
+                    BigDecimal sellingPrice = rs.getBigDecimal("selling_price");
+                    int productCategoryId = rs.getInt("product_category_id");
+
+                    boolean isProductIdNull = rs.getObject("product_id") == null;
+                    boolean isCategoryIdNull = rs.getObject("category_id") == null;
+
+                    if ((productId == 0 || isProductIdNull) && (categoryId == 0 || isCategoryIdNull)) {
+                        continue;
+                    }
+
+                    if (productId != 0 && !isProductIdNull) {
+                        // Check if the product's category has a discount
+                        Integer prodCategoryId = productCategoryMap.get(productId);
+                        if (prodCategoryId != null && discountedCategoryIds.contains(prodCategoryId)) {
+                            // Skip product-specific discount if category has a discount
+                            continue;
+                        }
+                        applyDiscountToProduct(productId, discountType, discountValue, minQuantity, sellingPrice, discountMap, minQuantityMap);
+                    }
+                    if (categoryId != 0 && !isCategoryIdNull) {
+                        try (PreparedStatement catStmt = conn.prepareStatement(
+                                "SELECT product_id, selling_price FROM products WHERE category_id = ?")) {
+                            catStmt.setInt(1, categoryId);
+                            ResultSet catRs = catStmt.executeQuery();
+                            while (catRs.next()) {
+                                int catProductId = catRs.getInt("product_id");
+                                BigDecimal catSellingPrice = catRs.getBigDecimal("selling_price");
+                                applyDiscountToProduct(catProductId, discountType, discountValue, minQuantity, catSellingPrice, discountMap, minQuantityMap);
+                            }
+                        }
+                    }
+                }
+
+                int discountedItems = 0;
+                int totalItems = salesTbl.getItems().size();
+
+                for (SalesItem item : salesTbl.getItems()) {
+                    Map<String, BigDecimal> typeDiscounts = discountMap.getOrDefault(item.getProductId(), new HashMap<>());
+                    Integer minQuantity = minQuantityMap.getOrDefault(item.getProductId(), 1);
+
+                    if (item.getQuantity() < minQuantity) {
+                        item.setDiscount(BigDecimal.ZERO);
+                        continue;
+                    }
+
+                    BigDecimal totalDiscount = BigDecimal.ZERO;
+                    int qty = item.getQuantity();
+
+                    BigDecimal percentageDiscount = typeDiscounts.getOrDefault("PERCENTAGE", BigDecimal.ZERO);
+                    BigDecimal fixedDiscount = typeDiscounts.getOrDefault("FIXED", BigDecimal.ZERO);
+                    BigDecimal bogoDiscount = typeDiscounts.getOrDefault("BOGO", BigDecimal.ZERO);
+                    BigDecimal bulkDiscount = typeDiscounts.getOrDefault("BULK", BigDecimal.ZERO);
+
+                    totalDiscount = totalDiscount.add(percentageDiscount).add(fixedDiscount);
+
+                    if (bogoDiscount.compareTo(BigDecimal.ZERO) > 0) {
+                        int discountedItemsCount = qty / 2;
+                        if (discountedItemsCount > 0) {
+                            BigDecimal effectiveBogo = bogoDiscount.multiply(BigDecimal.valueOf(discountedItemsCount))
+                                    .divide(BigDecimal.valueOf(qty), 4, RoundingMode.HALF_UP);
+                            effectiveBogo = effectiveBogo.max(BigDecimal.valueOf(50)); // Cap at 50%
+                            totalDiscount = totalDiscount.add(effectiveBogo);
+                        }
+                    }
+
+                    totalDiscount = totalDiscount.add(bulkDiscount);
+
+                    item.setDiscount(totalDiscount.setScale(2, RoundingMode.HALF_UP));
+                    if (totalDiscount.compareTo(BigDecimal.ZERO) > 0) {
+                        discountedItems++;
+                    }
+                }
+
+                double discountPercentageValue = totalItems > 0 ? (double) discountedItems / totalItems : 0;
+                updateDiscountProgress(discountPercentageValue);
+
+                salesTbl.refresh();
+                updateTotalAmount();
+
+                showNotification("🔔 Discounts applied successfully");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showNotification("❌ Error applying discounts: " + e.getMessage());
+        }
+    }
+
+    private void applyDiscountToProduct(int productId, String discountType, BigDecimal discountValue,
+                                        int minQuantity, BigDecimal sellingPrice,
+                                        Map<Integer, Map<String, BigDecimal>> discountMap,
+                                        Map<Integer, Integer> minQuantityMap) {
+        discountMap.computeIfAbsent(productId, k -> new HashMap<>());
+        Map<String, BigDecimal> typeDiscounts = discountMap.get(productId);
+
+        BigDecimal currentDiscount = typeDiscounts.getOrDefault(discountType, BigDecimal.ZERO);
+        int currentMinQuantity = minQuantityMap.getOrDefault(productId, 1);
+
+        BigDecimal discountPercentage = BigDecimal.ZERO;
+        if ("PERCENTAGE".equals(discountType)) {
+            discountPercentage = discountValue;
+        } else if ("FIXED".equals(discountType) && sellingPrice != null && sellingPrice.compareTo(BigDecimal.ZERO) > 0) {
+            discountPercentage = discountValue.divide(sellingPrice, 4, RoundingMode.HALF_UP)
+                    .multiply(BigDecimal.valueOf(100));
+        } else if ("BOGO".equals(discountType) || "BULK".equals(discountType)) {
+            discountPercentage = discountValue;
+        }
+
+        typeDiscounts.put(discountType, currentDiscount.add(discountPercentage).setScale(2, RoundingMode.HALF_UP));
+        minQuantityMap.put(productId, Math.max(currentMinQuantity, minQuantity));
+    }
+
+    private void updateDiscountProgress(double progress) {
+        String percentageText = String.format("%.1f%% of product/s discounted", progress * 100);
+        Platform.runLater(() -> {
+            discountPercentage.setText(percentageText);
+
+            Timeline timeline = new Timeline();
+            double currentProgress = discountedProdProgress.getProgress();
+            double targetProgress = progress;
+
+            KeyFrame keyFrame = new KeyFrame(
+                    Duration.millis(500),
+                    new javafx.animation.KeyValue(discountedProdProgress.progressProperty(), targetProgress, javafx.animation.Interpolator.EASE_BOTH)
+            );
+
+            timeline.getKeyFrames().add(keyFrame);
+            timeline.play();
+        });
     }
 
     private void showConfirmationDialog(String message, Consumer<Boolean> resultHandler) {
@@ -338,8 +679,392 @@ public class SalesController {
         discountColumn.setCellValueFactory(new PropertyValueFactory<>("discount"));
         finalPriceColumn.setCellValueFactory(new PropertyValueFactory<>("finalPrice"));
 
+        // Custom cell factory for productQtyColumn to show context menu on double-click
+        productQtyColumn.setCellFactory(col -> new QuantityContextMenuCell());
+
         if (salesTbl.getItems() == null) {
             salesTbl.setItems(FXCollections.observableArrayList());
+        }
+    }
+
+    private void setupTableContextMenu() {
+        ContextMenu contextMenu = new ContextMenu();
+        contextMenu.setStyle("-fx-background-color: white;" +
+                "-fx-border-color: #81B29A;" +
+                "-fx-border-width: 2px;" +
+                "-fx-border-radius: 5px;" +
+                "-fx-background-radius: 5px;");
+
+        MenuItem deleteItem = new MenuItem("Delete");
+        deleteItem.setStyle("-fx-text-fill: #333333; -fx-font-weight: bold;");
+
+        MenuItem deleteMultipleItem = new MenuItem("Delete Multiple");
+        deleteMultipleItem.setStyle("-fx-text-fill: #333333; -fx-font-weight: bold;");
+
+        // Delete single item action
+        deleteItem.setOnAction(event -> {
+            SalesItem selectedItem = salesTbl.getSelectionModel().getSelectedItem();
+            if (selectedItem != null) {
+                salesTbl.getItems().remove(selectedItem);
+                updateTotalAmount();
+                showNotification("🔔 Item removed from sale");
+            }
+        });
+
+        // Delete multiple items action
+        deleteMultipleItem.setOnAction(event -> {
+            enableMultipleSelection();
+        });
+
+        contextMenu.getItems().addAll(deleteItem, deleteMultipleItem);
+
+        // Attach context menu to table rows
+        salesTbl.setRowFactory(tv -> {
+            TableRow<SalesItem> row = new TableRow<>();
+            row.setOnContextMenuRequested(event -> {
+                if (!row.isEmpty()) {
+                    contextMenu.show(row, event.getScreenX(), event.getScreenY());
+                }
+            });
+            return row;
+        });
+    }
+
+    private void enableMultipleSelection() {
+        // Create a selection dialog
+        Stage selectionStage = new Stage();
+        selectionStage.initModality(Modality.APPLICATION_MODAL);
+        selectionStage.initOwner(salesTbl.getScene().getWindow());
+        selectionStage.setTitle("Select Items to Delete");
+        selectionStage.initStyle(StageStyle.TRANSPARENT); // Make stage transparent for rounded corners
+
+        // Clone current table with checkboxes
+        TableView<SalesItem> selectionTable = new TableView<>();
+        selectionTable.setPrefHeight(400);
+        selectionTable.setPrefWidth(600);
+
+        // Apply the same styling as salesTbl
+        selectionTable.setId("salesTbl");
+        selectionTable.setEditable(true);
+
+        // Selection column with styled checkbox
+        TableColumn<SalesItem, Boolean> selectCol = new TableColumn<>("Select");
+        selectCol.setCellValueFactory(cellData -> cellData.getValue().selectedProperty());
+        selectCol.setCellFactory(column -> {
+            CheckBoxTableCell<SalesItem, Boolean> cell = new CheckBoxTableCell<>();
+            cell.setAlignment(Pos.CENTER);
+            cell.setStyle("-fx-background-color: transparent; -fx-padding: 5px;");
+            return cell;
+        });
+
+        // Load checkbox styling with CSS
+        selectionTable.getStylesheets().add(SalesController.class.getResource("/css/sales.css").toExternalForm());
+        selectionTable.getStylesheets().add(SalesController.class.getResource("/css/checkbox-style.css").toExternalForm());
+
+        selectCol.setEditable(true);
+        selectCol.setPrefWidth(70);
+
+        // Add ID, name and quantity columns
+        TableColumn<SalesItem, Integer> idCol = new TableColumn<>("ID");
+        idCol.setCellValueFactory(new PropertyValueFactory<>("productId"));
+
+        TableColumn<SalesItem, String> nameCol = new TableColumn<>("Product");
+        nameCol.setCellValueFactory(new PropertyValueFactory<>("productName"));
+        nameCol.setPrefWidth(380);
+
+        TableColumn<SalesItem, Integer> qtyCol = new TableColumn<>("Qty");
+        qtyCol.setCellValueFactory(new PropertyValueFactory<>("quantity"));
+        qtyCol.setPrefWidth(70);
+
+        selectionTable.getColumns().addAll(selectCol, idCol, nameCol, qtyCol);
+
+        // Reset selected state
+        for (SalesItem item : salesTbl.getItems()) {
+            item.setSelected(false);
+        }
+        selectionTable.getItems().addAll(salesTbl.getItems());
+
+        // Add select all option with styled checkbox
+        MFXCheckbox selectAllCheckbox = new MFXCheckbox("Select All");
+        selectAllCheckbox.setStyle("-fx-text-fill: #333333; -fx-font-weight: bold;");
+        selectAllCheckbox.setOnAction(e -> {
+            boolean selectAll = selectAllCheckbox.isSelected();
+            for (SalesItem item : selectionTable.getItems()) {
+                item.setSelected(selectAll);
+            }
+            selectionTable.refresh();
+        });
+
+        // Styled buttons
+        MFXButton deleteBtn = new MFXButton("Delete Selected");
+        deleteBtn.setPrefHeight(45);
+        deleteBtn.setPrefWidth(160);
+        deleteBtn.setStyle("-fx-background-color: #81B29A; " +
+                "-fx-text-fill: white; " +
+                "-fx-font-weight: bold; " +
+                "-fx-background-radius: 8px; " +
+                "-fx-font-size: 14px; " +
+                "-fx-padding: 10px 20px;");
+
+        MFXButton cancelBtn = new MFXButton("Cancel");
+        cancelBtn.setPrefHeight(45);
+        cancelBtn.setPrefWidth(120);
+        cancelBtn.setStyle("-fx-background-color: #E07A5F; " +
+                "-fx-text-fill: white; " +
+                "-fx-font-weight: bold; " +
+                "-fx-background-radius: 8px; " +
+                "-fx-font-size: 14px; " +
+                "-fx-padding: 10px 20px;");
+
+        // Add hover and pressed effects
+        deleteBtn.setOnMouseEntered(e -> deleteBtn.setStyle(deleteBtn.getStyle() + "-fx-scale-x: 1.05; -fx-scale-y: 1.05;"));
+        deleteBtn.setOnMouseExited(e -> deleteBtn.setStyle(deleteBtn.getStyle().replace("-fx-scale-x: 1.05; -fx-scale-y: 1.05;", "")));
+        deleteBtn.setOnMousePressed(e -> deleteBtn.setStyle(deleteBtn.getStyle() + "-fx-scale-x: 0.95; -fx-scale-y: 0.95;"));
+        deleteBtn.setOnMouseReleased(e -> deleteBtn.setStyle(deleteBtn.getStyle().replace("-fx-scale-x: 0.95; -fx-scale-y: 0.95;", "")));
+
+        cancelBtn.setOnMouseEntered(e -> cancelBtn.setStyle(cancelBtn.getStyle() + "-fx-scale-x: 1.05; -fx-scale-y: 1.05;"));
+        cancelBtn.setOnMouseExited(e -> cancelBtn.setStyle(cancelBtn.getStyle().replace("-fx-scale-x: 1.05; -fx-scale-y: 1.05;", "")));
+        cancelBtn.setOnMousePressed(e -> cancelBtn.setStyle(cancelBtn.getStyle() + "-fx-scale-x: 0.95; -fx-scale-y: 0.95;"));
+        cancelBtn.setOnMouseReleased(e -> cancelBtn.setStyle(cancelBtn.getStyle().replace("-fx-scale-x: 0.95; -fx-scale-y: 0.95;", "")));
+
+        HBox buttonsBox = new HBox(15, deleteBtn, cancelBtn);
+        buttonsBox.setAlignment(Pos.CENTER);
+        buttonsBox.setPadding(new Insets(15));
+
+        // Delete button action
+        deleteBtn.setOnAction(event -> {
+            java.util.List<SalesItem> itemsToRemove = new ArrayList<>();
+
+            for (SalesItem item : selectionTable.getItems()) {
+                if (item.isSelected()) {
+                    itemsToRemove.add(item);
+                }
+            }
+
+            salesTbl.getItems().removeAll(itemsToRemove);
+            updateTotalAmount();
+
+            if (!itemsToRemove.isEmpty()) {
+                showNotification("🔔 " + itemsToRemove.size() + " item(s) removed");
+            }
+
+            selectionStage.close();
+        });
+
+        cancelBtn.setOnAction(event -> selectionStage.close());
+
+        // Add a title label
+        Label titleLabel = new Label("Select Items to Delete");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #81B29A;");
+        titleLabel.setPadding(new Insets(0, 0, 10, 0));
+
+        // Create a styled layout
+        VBox layout = new VBox(10, titleLabel, selectAllCheckbox, selectionTable, buttonsBox);
+        layout.setStyle("-fx-background-color: #FAF9F6; -fx-padding: 20;");
+        layout.setPadding(new Insets(20));
+
+        // Add drop shadow
+        DropShadow dropShadow = new DropShadow();
+        dropShadow.setRadius(15);
+        dropShadow.setSpread(0.05);
+        dropShadow.setOffsetY(3);
+        dropShadow.setColor(Color.rgb(0, 0, 0, 0.3));
+        layout.setEffect(dropShadow);
+
+        // Set the scene with proper styling
+        Scene scene = new Scene(layout);
+        scene.setFill(Color.TRANSPARENT); // Make scene background transparent
+        scene.getStylesheets().add(getClass().getResource("/css/sales.css").toExternalForm());
+
+        // Apply rounded corners with clip
+        Rectangle clip = new Rectangle(layout.getPrefWidth(), layout.getPrefHeight());
+        clip.setArcWidth(20);
+        clip.setArcHeight(20);
+        layout.setClip(clip);
+
+        // Make the clip resize with the layout
+        layout.layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
+            clip.setWidth(newValue.getWidth());
+            clip.setHeight(newValue.getHeight());
+        });
+
+        // Make window draggable
+        AtomicReference<Double> xOffset = new AtomicReference<>((double) 0);
+        AtomicReference<Double> yOffset = new AtomicReference<>((double) 0);
+
+        layout.setOnMousePressed(event -> {
+            xOffset.set(event.getSceneX());
+            yOffset.set(event.getSceneY());
+        });
+
+        layout.setOnMouseDragged(event -> {
+            selectionStage.setX(event.getScreenX() - xOffset.get());
+            selectionStage.setY(event.getScreenY() - yOffset.get());
+        });
+
+        selectionStage.setScene(scene);
+        selectionStage.showAndWait();
+    }
+
+    // Custom TableCell with ContextMenu for quantity adjustments
+    private class QuantityContextMenuCell extends TableCell<SalesItem, Integer> {
+        private final ContextMenu contextMenu;
+        private final TextField textField;
+        private boolean isAdding = true; // Tracks whether adding or deducting
+
+        public QuantityContextMenuCell() {
+            // Initialize styled ContextMenu
+            contextMenu = new ContextMenu();
+            contextMenu.setStyle(
+                    "-fx-background-color: white;" +
+                            "-fx-border-color: #81B29A;" +
+                            "-fx-border-width: 2px;" +
+                            "-fx-border-radius: 5px;" +
+                            "-fx-background-radius: 5px;" +
+                            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0.2, 0, 1);"
+            );
+
+            // Menu items
+            MenuItem addQtyItem = new MenuItem("Add Qty");
+            MenuItem deductQtyItem = new MenuItem("Deduct Qty");
+
+            // Style menu items
+            String menuItemStyle =
+                    "-fx-padding: 5px 10px;" +
+                            "-fx-font-size: 14px;" +
+                            "-fx-font-weight: bold;" +
+                            "-fx-text-fill: #333333;";
+            addQtyItem.setStyle(menuItemStyle);
+            deductQtyItem.setStyle(menuItemStyle);
+
+            contextMenu.getItems().addAll(addQtyItem, deductQtyItem);
+
+            // Initialize styled TextField
+            textField = new TextField();
+            textField.setStyle(
+                    "-fx-background-color: white;" +
+                            "-fx-border-color: #81B29A;" +
+                            "-fx-border-radius: 5px;" +
+                            "-fx-background-radius: 5px;" +
+                            "-fx-text-fill: #333333;" +
+                            "-fx-font-size: 14px;" +
+                            "-fx-font-weight: bold;" +
+                            "-fx-padding: 5px;" +
+                            "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.2), 5, 0.2, 0, 1);"
+            );
+            textField.setPrefWidth(80);
+
+            // Restrict input to positive integers
+            textField.setTextFormatter(new TextFormatter<>(change -> {
+                String newText = change.getControlNewText();
+                if (newText.matches("\\d*") && !newText.isEmpty()) {
+                    try {
+                        int value = Integer.parseInt(newText);
+                        if (value > 0) {
+                            return change;
+                        }
+                    } catch (NumberFormatException e) {
+                        // Ignore invalid numbers
+                    }
+                }
+                return null;
+            }));
+
+            // Commit on Enter
+            textField.setOnAction(event -> {
+                try {
+                    int inputQty = Integer.parseInt(textField.getText());
+                    SalesItem item = getTableRow().getItem();
+                    if (item != null) {
+                        int currentQty = item.getQuantity();
+                        int newQty;
+                        if (isAdding) {
+                            newQty = currentQty + inputQty;
+                        } else {
+                            newQty = Math.max(1, currentQty - inputQty); // Ensure quantity >= 1
+                        }
+                        item.setQuantity(newQty);
+                        commitEdit(newQty);
+                    }
+                } catch (NumberFormatException e) {
+                    cancelEdit();
+                }
+            });
+
+            // Cancel on focus loss
+            textField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
+                if (!isFocused && isEditing()) {
+                    cancelEdit();
+                }
+            });
+
+            // ContextMenu actions
+            addQtyItem.setOnAction(event -> {
+                isAdding = true;
+                startEditing();
+            });
+
+            deductQtyItem.setOnAction(event -> {
+                isAdding = false;
+                startEditing();
+            });
+
+            // Show ContextMenu on double-click
+            setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !isEmpty() && !isEditing()) {
+                    contextMenu.show(this, event.getScreenX(), event.getScreenY());
+                }
+            });
+        }
+
+        private void startEditing() {
+            startEdit();
+        }
+
+        @Override
+        public void startEdit() {
+            super.startEdit();
+            SalesItem item = getTableRow().getItem();
+            if (item != null) {
+                textField.setText("");
+                setText(null);
+                setGraphic(textField);
+                textField.requestFocus();
+            }
+        }
+
+        @Override
+        public void cancelEdit() {
+            super.cancelEdit();
+            SalesItem item = getTableRow().getItem();
+            if (item != null) {
+                setText(String.valueOf(item.getQuantity()));
+                setGraphic(null);
+            }
+        }
+
+        @Override
+        protected void updateItem(Integer item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setText(null);
+                setGraphic(null);
+            } else {
+                if (isEditing()) {
+                    setText(null);
+                    setGraphic(textField);
+                } else {
+                    setText(item.toString());
+                    setGraphic(null);
+                }
+            }
+        }
+
+        @Override
+        public void commitEdit(Integer newValue) {
+            super.commitEdit(newValue);
+            setText(String.valueOf(newValue));
+            setGraphic(null);
         }
     }
 

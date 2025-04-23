@@ -67,7 +67,7 @@
                         <Font name="Open Sans Regular" size="14.0" />
                      </font>
                   </MFXTextField>
-                  <MFXProgressSpinner fx:id="insertionProgress" layoutX="762.0" layoutY="514.0" prefHeight="58.0" prefWidth="69.0" progress="0.54" startingAngle="100.0" />
+                  <MFXProgressSpinner fx:id="insertionProgress" layoutX="762.0" layoutY="514.0" prefHeight="58.0" prefWidth="69.0" progress="0.0" startingAngle="100.0" />
                   <MFXButton id="btnCheckout" fx:id="btnCheckout" buttonType="RAISED" depthLevel="LEVEL1" layoutX="831.0" layoutY="511.0" prefHeight="64.0" prefWidth="184.0" rippleColor="WHITE" text="Checkout" textFill="WHITE">
                      <graphic>
                         <ImageView fitHeight="48.0" fitWidth="55.0" pickOnBounds="true" preserveRatio="true">
@@ -93,9 +93,9 @@
                      </font>
                   </MFXButton>
                   <MFXProgressBar id="discountedProdProgress" fx:id="discountedProdProgress" layoutX="672.0" layoutY="376.0" prefHeight="14.0" prefWidth="332.0" progress="0.0" />
-                  <Label fx:id="discountPercentage" alignment="CENTER" layoutX="751.0" layoutY="390.0" prefHeight="25.0" prefWidth="174.0" text="\%">
+                  <Label fx:id="discountPercentage" alignment="CENTER" layoutX="692.0" layoutY="390.0" prefHeight="25.0" prefWidth="294.0" text="\%">
                      <font>
-                        <Font name="Source Sans 3 SemiBold" size="16.0" />
+                        <Font name="Source Sans 3 SemiBold" size="14.0" />
                      </font>
                   </Label>
                   <ListView id="productsListView" fx:id="productsListView" layoutX="659.0" layoutY="114.0" prefHeight="253.0" prefWidth="357.0" />
@@ -120,11 +120,11 @@
                      </font>
                   </MFXTextField>
                   <MFXProgressSpinner fx:id="cameraLoadingSpinner" layoutX="806.0" layoutY="216.0" progress="0.0" visible="false" />
-                  <MFXButton fx:id="btnClearTable" buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" depthLevel="LEVEL1" layoutX="457.0" layoutY="52.0" prefHeight="32.0" prefWidth="50.0" style="-fx-background-color: transparent;">
+                  <MFXButton fx:id="btnClearTable" buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" layoutX="457.0" layoutY="52.0" prefHeight="32.0" prefWidth="50.0" style="-fx-background-color: transparent;">
                      <graphic>
                         <ImageView fitHeight="21.0" fitWidth="22.0" pickOnBounds="true" preserveRatio="true">
                            <image>
-                              <Image url="@../../../img/reload.png" />
+                              <Image url="@../../../img/clean.png" />
                            </image>
                         </ImageView>
                      </graphic>
