@@ -16,6 +16,37 @@ create table categories
         unique (category_name)
 );
 
+create table customers
+(
+    customer_id    int auto_increment
+        primary key,
+    name           varchar(100)                               not null,
+    credit_balance decimal(10, 2) default 0.00                null,
+    phone          varchar(20)                                null,
+    email          varchar(100)                               null,
+    created_at     timestamp      default current_timestamp() not null,
+    constraint name
+        unique (name)
+);
+
+create table credit_transactions
+(
+    transaction_id   int auto_increment
+        primary key,
+    customer_id      int                                   not null,
+    amount           decimal(10, 2)                        not null,
+    transaction_date timestamp default current_timestamp() not null,
+    status           enum ('PAID', 'UNPAID')               not null,
+    due_date         date                                  null,
+    sale_id          int                                   null,
+    constraint credit_transactions_ibfk_1
+        foreign key (customer_id) references customers (customer_id)
+            on delete cascade
+);
+
+create index customer_id
+    on credit_transactions (customer_id);
+
 create table products
 (
     product_id        int auto_increment
@@ -178,7 +209,7 @@ END;
 
 create procedure GetProductDiscounts()
 BEGIN
-    SELECT 
+    SELECT
         d.product_id,
         d.category_id,
         d.discount_type,
@@ -187,9 +218,24 @@ BEGIN
         p.selling_price,
         p.category_id AS product_category_id
     FROM discounts d
-    LEFT JOIN products p ON d.product_id = p.product_id OR d.category_id = p.category_id
-    WHERE d.is_active = 1 
-    AND CURRENT_TIMESTAMP BETWEEN d.start_date AND d.end_date;
+             LEFT JOIN products p ON d.product_id = p.product_id OR d.category_id = p.category_id
+    WHERE d.is_active = 1
+      AND CURRENT_TIMESTAMP BETWEEN d.start_date AND d.end_date;
+END;
+
+create procedure add_sale_item(IN p_sale_id int, IN p_product_id int, IN p_quantity int, IN p_subtotal decimal(10, 2),
+                               IN p_final_price decimal(10, 2))
+BEGIN
+    -- Insert the sale item
+    INSERT INTO sales_items (sale_id, product_id, quantity, subtotal, final_price) 
+    VALUES (p_sale_id, p_product_id, p_quantity, p_subtotal, p_final_price);
+END;
+
+create procedure process_sale(IN p_total_price decimal(10, 2), OUT p_sale_id int)
+BEGIN
+    -- Insert the sale record and get its ID
+    INSERT INTO sales (total_price) VALUES (p_total_price);
+    SET p_sale_id = LAST_INSERT_ID();
 END;
 
 create procedure sp_add_category(IN p_category_name varchar(100), OUT p_success tinyint(1))
@@ -309,19 +355,19 @@ create event update_discount_active_status on schedule
     enable
     do
     BEGIN
-    -- Activate discounts where start_date is reached and end_date is not passed
-    UPDATE discounts
-    SET is_active = 1
-    WHERE start_date <= CURRENT_DATE
-      AND end_date >= CURRENT_DATE
-      AND is_active = 0;
+        -- Activate discounts where start_date is reached and end_date is not passed
+        UPDATE discounts
+        SET is_active = 1
+        WHERE start_date <= CURRENT_DATE
+          AND end_date >= CURRENT_DATE
+          AND is_active = 0;
 
-    -- Deactivate discounts where end_date has passed
-    UPDATE discounts
-    SET is_active = 0
-    WHERE end_date < CURRENT_DATE
-      AND is_active = 1;
-END;
+        -- Deactivate discounts where end_date has passed
+        UPDATE discounts
+        SET is_active = 0
+        WHERE end_date < CURRENT_DATE
+          AND is_active = 1;
+    END;
 
 create event update_expired_discounts on schedule
     every '1' DAY
@@ -329,9 +375,9 @@ create event update_expired_discounts on schedule
     enable
     do
     BEGIN
-    UPDATE discounts 
-    SET is_active = FALSE 
-    WHERE end_date < NOW() AND is_active = TRUE;
-END;
+        UPDATE discounts
+        SET is_active = FALSE
+        WHERE end_date < NOW() AND is_active = TRUE;
+    END;
 
 

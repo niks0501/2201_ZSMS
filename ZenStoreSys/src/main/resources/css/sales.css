@@ -224,3 +224,31 @@
 .flying-item {
     -fx-font-size: 14px;
 }
+
+.menu-item .label {
+    -fx-padding: 5px 10px;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #333333;
+}
+.menu-item:hover .label {
+    -fx-background-color: #81B29A;
+    -fx-text-fill: white;
+}
+.button {
+    -fx-background-color: #81B29A;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5px;
+}
+.button:hover {
+    -fx-background-color: #6B9981;
+}
+.mfx-text-field {
+    -fx-border-color: #81B29A;
+    -fx-border-radius: 5px;
+}
+.mfx-date-picker {
+    -fx-border-color: #81B29A;
+    -fx-border-radius: 5px;
+}

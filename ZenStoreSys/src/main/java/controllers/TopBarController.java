@@ -80,80 +80,60 @@ public class TopBarController {
 
     @FXML
     private void loadSalesView() {
-        try {
-            // Create and configure progress indicator
-            ProgressIndicator progressIndicator = new ProgressIndicator();
-            progressIndicator.setMaxSize(100, 100);
+        // Prevent multiple concurrent loading operations
+        if (isLoading) {
+            return;
+        }
 
-            // Add the progress indicator to center of content pane
+        isLoading = true;
+        btnSales.setDisable(true);
+
+        // Show loading indicator
+        ProgressIndicator loadingIndicator = new ProgressIndicator();
+        loadingIndicator.setMaxSize(100, 100);
+
+        if (contentPane != null) {
             contentPane.getChildren().clear();
-            StackPane loadingPane = new StackPane(progressIndicator);
-            loadingPane.setStyle("-fx-background-color: white;");
-            contentPane.getChildren().add(loadingPane);
+            contentPane.getChildren().add(loadingIndicator);
 
-            // Create loading animation
-            Timeline loadingAnimation = new Timeline(
-                    new KeyFrame(Duration.ZERO, new KeyValue(progressIndicator.progressProperty(), 0)),
-                    new KeyFrame(Duration.seconds(2), new KeyValue(progressIndicator.progressProperty(), 1, Interpolator.EASE_BOTH))
-            );
-            loadingAnimation.play();
-
-            // Load the sales view in background thread to prevent UI freezing
-            Task<Parent> loadTask = new Task<>() {
-                @Override
-                protected Parent call() throws Exception {
+            // Load FXML in background thread
+            Thread loaderThread = new Thread(() -> {
+                try {
                     FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/company/zenstoresys/sales.fxml"));
-                    Parent salesView = loader.load();
+                    StackPane salesView = loader.load();
                     salesView.getStylesheets().add(getClass().getResource("/css/sales.css").toExternalForm());
 
-                    // Apply initial state for animation
-                    salesView.setOpacity(0);
-                    return salesView;
+                    // Update UI on JavaFX thread when ready
+                    Platform.runLater(() -> {
+                        contentPane.getChildren().clear();
+                        salesView.setOpacity(0);
+                        contentPane.getChildren().add(salesView);
+
+                        // Just fade in the view immediately
+                        FadeTransition fadeIn = new FadeTransition(Duration.millis(200), salesView);
+                        fadeIn.setFromValue(0);
+                        fadeIn.setToValue(1);
+                        fadeIn.setInterpolator(Interpolator.EASE_BOTH);
+                        fadeIn.setOnFinished(e -> {
+                            isLoading = false;
+                            btnSales.setDisable(false);
+                        });
+                        fadeIn.play();
+                    });
+                } catch (IOException e) {
+                    Platform.runLater(() -> {
+                        contentPane.getChildren().clear();
+                        Label errorLabel = new Label("Error loading content: " + e.getMessage());
+                        contentPane.getChildren().add(errorLabel);
+                        isLoading = false;
+                        btnSales.setDisable(false);
+                    });
+                    e.printStackTrace();
                 }
-            };
-
-            loadTask.setOnSucceeded(event -> {
-                Parent salesView = loadTask.getValue();
-
-                // Create fade-in transition
-                FadeTransition fadeIn = new FadeTransition(Duration.millis(600), salesView);
-                fadeIn.setFromValue(0);
-                fadeIn.setToValue(1);
-                fadeIn.setInterpolator(Interpolator.EASE_IN);
-
-                // Switch from loading indicator to the actual view with animation
-                fadeIn.setOnFinished(e -> {
-                    // Ensure any resources are properly managed
-                });
-
-                // Replace loading indicator with sales view and start animation
-                contentPane.getChildren().clear();
-                contentPane.getChildren().add(salesView);
-                fadeIn.play();
             });
 
-            loadTask.setOnFailed(event -> {
-                Throwable exception = loadTask.getException();
-                exception.printStackTrace();
-
-                // Show error message
-                Label errorLabel = new Label("Error loading Sales view: " + exception.getMessage());
-                errorLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
-                contentPane.getChildren().clear();
-                contentPane.getChildren().add(new StackPane(errorLabel));
-            });
-
-            // Start loading in background
-            new Thread(loadTask).start();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-
-            // Show error in UI
-            Label errorLabel = new Label("Error: " + e.getMessage());
-            errorLabel.setStyle("-fx-text-fill: red; -fx-font-weight: bold;");
-            contentPane.getChildren().clear();
-            contentPane.getChildren().add(errorLabel);
+            loaderThread.setDaemon(true);
+            loaderThread.start();
         }
     }
 

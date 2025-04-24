@@ -12,6 +12,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Group;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
@@ -39,6 +40,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.*;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -165,81 +167,59 @@ public class SalesController {
             return;
         }
 
-        // Get all items from the table
         List<SalesItem> items = new ArrayList<>(salesTbl.getItems());
         BigDecimal totalAmount = new BigDecimal(totalAmountFld.getText());
 
-        // Show progress indicator
         insertionProgress.setVisible(true);
         insertionProgress.setProgress(0);
 
-        // Process checkout in background thread
         new Thread(() -> {
             try (Connection conn = DBConnect.getConnection()) {
-                // Disable auto-commit for transaction
                 conn.setAutoCommit(false);
 
                 try {
                     int saleId = -1;
-
-                    // First, call stored procedure to insert into sales table
                     try (CallableStatement stmt = conn.prepareCall("{CALL process_sale(?, ?)}")) {
                         stmt.setBigDecimal(1, totalAmount);
                         stmt.registerOutParameter(2, Types.INTEGER);
                         stmt.execute();
-
                         saleId = stmt.getInt(2);
                         if (saleId <= 0) {
                             throw new SQLException("Failed to get valid sale ID");
                         }
                     }
 
-                    updateProgress(0.2); // 20% progress after sales record
+                    updateProgress(0.2);
 
-                    // Next, insert each item using the stored procedure
                     try (CallableStatement stmt = conn.prepareCall("{CALL add_sale_item(?, ?, ?, ?, ?)}")) {
-                        double progressStep = 0.8 / items.size(); // Remaining 80% divided by items
+                        double progressStep = 0.8 / items.size();
                         double currentProgress = 0.2;
 
                         for (int i = 0; i < items.size(); i++) {
                             SalesItem item = items.get(i);
-
-                            // Set parameters for the stored procedure
                             stmt.setInt(1, saleId);
                             stmt.setInt(2, item.getProductId());
                             stmt.setInt(3, item.getQuantity());
                             stmt.setBigDecimal(4, item.getSubtotal());
                             stmt.setBigDecimal(5, item.getFinalPrice());
-
-                            // Execute the procedure
                             stmt.execute();
-
-                            // Update progress
                             currentProgress += progressStep;
                             updateProgress(currentProgress);
                         }
                     }
 
-                    // Commit transaction
                     conn.commit();
-                    updateProgress(1.0); // 100% progress
+                    updateProgress(1.0);
 
-                    // Clear sales table on success
+                    int finalSaleId = saleId;
                     Platform.runLater(() -> {
-                        salesTbl.getItems().clear();
-                        updateTotalAmount();
-                        showNotification("✅ Sale completed successfully");
-
-                        // Hide progress indicator after delay
-                        new Timeline(new KeyFrame(Duration.seconds(1), e ->
-                                insertionProgress.setVisible(false))).play();
+                        showPaymentDialog(totalAmount, finalSaleId);
+                        insertionProgress.setVisible(false);
                     });
 
                 } catch (Exception e) {
-                    // Rollback on error
                     conn.rollback();
                     e.printStackTrace();
-
                     Platform.runLater(() -> {
                         showNotification("❌ Error processing sale: " + e.getMessage());
                         insertionProgress.setVisible(false);
@@ -253,6 +233,413 @@ public class SalesController {
                 });
             }
         }).start();
+    }
+
+    private void showPaymentDialog(BigDecimal initialTotal, int saleId) {
+        Stage dialog = new Stage();
+        dialog.initModality(Modality.APPLICATION_MODAL);
+        dialog.initStyle(StageStyle.UNDECORATED);
+        dialog.initOwner(btnCheckout.getScene().getWindow());
+
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(20));
+        vbox.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #81B29A; -fx-border-width: 2; -fx-border-radius: 10;");
+
+        Label titleLabel = new Label("Payment Details");
+        titleLabel.setStyle("-fx-font-size: 18px; -fx-font-weight: bold; -fx-text-fill: #81B29A;");
+
+        MFXTextField totalAmountField = new MFXTextField();
+        totalAmountField.setPromptText("Total Amount");
+        totalAmountField.setText(initialTotal.setScale(2, RoundingMode.HALF_UP).toString());
+        totalAmountField.setEditable(false);
+        totalAmountField.setFloatMode(io.github.palexdev.materialfx.enums.FloatMode.BORDER);
+        totalAmountField.setPrefWidth(200);
+
+        MFXTextField paymentField = new MFXTextField();
+        paymentField.setPromptText("Payment Amount");
+        paymentField.setFloatMode(io.github.palexdev.materialfx.enums.FloatMode.BORDER);
+        paymentField.setPrefWidth(200);
+        paymentField.setTextFormatter(new TextFormatter<>(change -> {
+            String newText = change.getControlNewText();
+            if (newText.matches("\\d*(\\.\\d{0,2})?")) {
+                return change;
+            }
+            return null;
+        }));
+
+        MFXTextField changeField = new MFXTextField();
+        changeField.setPromptText("Change");
+        changeField.setEditable(false);
+        changeField.setFloatMode(io.github.palexdev.materialfx.enums.FloatMode.BORDER);
+        changeField.setPrefWidth(200);
+
+        MFXTextField customerNameField = new MFXTextField();
+        customerNameField.setPromptText("Customer Name (for Credit)");
+        customerNameField.setFloatMode(io.github.palexdev.materialfx.enums.FloatMode.BORDER);
+        customerNameField.setPrefWidth(200);
+
+        MFXDatePicker dueDatePicker = new MFXDatePicker();
+        dueDatePicker.setPromptText("Due Date");
+        dueDatePicker.setFloatMode(io.github.palexdev.materialfx.enums.FloatMode.BORDER);
+        dueDatePicker.setValue(LocalDate.now().plusDays(7));
+
+        MFXButton payButton = new MFXButton("Pay");
+        payButton.setStyle("-fx-background-color: #81B29A; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5px;");
+        payButton.setDisable(true);
+
+        MFXButton creditButton = new MFXButton("Credit");
+        creditButton.setStyle("-fx-background-color: #81B29A; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5px;");
+
+        HBox buttonBox = new HBox(10, payButton, creditButton);
+        buttonBox.setAlignment(Pos.CENTER);
+
+        vbox.getChildren().addAll(titleLabel, totalAmountField, paymentField, changeField, customerNameField, dueDatePicker, buttonBox);
+
+        // Payment validation and button enabling
+        paymentField.textProperty().addListener((obs, oldValue, newValue) -> {
+            try {
+                BigDecimal payment = newValue.isEmpty() ? BigDecimal.ZERO : new BigDecimal(newValue);
+                BigDecimal total = new BigDecimal(totalAmountField.getText());
+                if (payment.compareTo(BigDecimal.ZERO) > 0) {
+                    // Enable pay button for any positive payment
+                    payButton.setDisable(false);
+
+                    // Calculate change
+                    BigDecimal change = payment.subtract(total);
+                    if (change.compareTo(BigDecimal.ZERO) >= 0) {
+                        changeField.setText(change.setScale(2, RoundingMode.HALF_UP).toString());
+                    } else {
+                        changeField.setText("0.00");
+                    }
+                } else {
+                    // Disable pay button if no payment entered
+                    payButton.setDisable(true);
+                    changeField.setText("0.00");
+                }
+
+            } catch (NumberFormatException e) {
+                payButton.setDisable(true);
+                changeField.setText("0.00");
+
+            }
+        });
+
+        payButton.setOnAction(e -> {
+            try {
+                BigDecimal payment = new BigDecimal(paymentField.getText());
+                BigDecimal total = new BigDecimal(totalAmountField.getText());
+
+                // Calculate remaining balance
+                BigDecimal remainingBalance = total.subtract(payment);
+
+                try (Connection conn = DBConnect.getConnection();
+                     PreparedStatement stmt = conn.prepareStatement(
+                             "UPDATE sales SET total_price = ? WHERE sale_id = ?")) {
+
+                    if (remainingBalance.compareTo(BigDecimal.ZERO) <= 0) {
+                        // For full payment or overpayment, record the exact total price
+                        stmt.setBigDecimal(1, total);
+                    } else {
+                        // For partial payment, record only the amount paid
+                        stmt.setBigDecimal(1, payment);
+                    }
+
+                    stmt.setInt(2, saleId);
+                    stmt.executeUpdate();
+                }
+
+                // If this is a full payment or overpayment
+                if (remainingBalance.compareTo(BigDecimal.ZERO) <= 0) {
+                    dialog.close();
+                    salesTbl.getItems().clear();
+                    updateTotalAmount();
+
+                    // Show appropriate message for exact payment vs overpayment
+                    if (remainingBalance.compareTo(BigDecimal.ZERO) < 0) {
+                        showNotification("✅ Payment completed with change: " +
+                                remainingBalance.abs().setScale(2, RoundingMode.HALF_UP));
+                    } else {
+                        showNotification("✅ Payment completed successfully");
+                    }
+                } else {
+                    // Partial payment - inform user but keep dialog open
+                    showNotification("✅ Partial payment of " + payment + " recorded");
+
+                    // Update the remaining amount to be credited
+                    totalAmountField.setText(remainingBalance.toString());
+
+                    // Disable pay button until new payment amount is entered
+                    payButton.setDisable(true);
+
+                    // Highlight the credit button as next action
+                    creditButton.setStyle("-fx-background-color: #48c51d; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5px;");
+
+                    // Update label to indicate remaining balance
+                    titleLabel.setText("Remaining Balance: " + remainingBalance);
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showNotification("❌ Error recording payment");
+            } catch (NumberFormatException ex) {
+                showNotification("❌ Invalid payment amount");
+            }
+        });
+
+        creditButton.setOnAction(e -> {
+            String customerName = customerNameField.getText().trim();
+            if (customerName.isEmpty()) {
+                showNotification("❌ Customer name is required for credit");
+                return;
+            }
+
+            // Check if any payment has been made
+            String paymentText = paymentField.getText().trim();
+            boolean isFullCredit = paymentText.isEmpty() || new BigDecimal(paymentText.isEmpty() ? "0" : paymentText).compareTo(BigDecimal.ZERO) == 0;
+
+            // Only update total_price to 0 if no payment was made (full credit)
+            if (isFullCredit) {
+                try (Connection conn = DBConnect.getConnection();
+                     PreparedStatement stmt = conn.prepareStatement(
+                             "UPDATE sales SET total_price = ? WHERE sale_id = ?")) {
+                    stmt.setBigDecimal(1, BigDecimal.ZERO);
+                    stmt.setInt(2, saleId);
+                    stmt.executeUpdate();
+                } catch (SQLException ex) {
+                    ex.printStackTrace();
+                    showNotification("❌ Error updating sale record");
+                    return;
+                }
+            }
+
+            // Check if customer already exists and has contact information
+            String existingPhone = "";
+            String existingEmail = "";
+            boolean customerExists = false;
+
+            try (Connection conn = DBConnect.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(
+                         "SELECT phone, email FROM customers WHERE name = ?")) {
+                stmt.setString(1, customerName);
+                ResultSet rs = stmt.executeQuery();
+
+                if (rs.next()) {
+                    customerExists = true;
+                    existingPhone = rs.getString("phone") != null ? rs.getString("phone") : "";
+                    existingEmail = rs.getString("email") != null ? rs.getString("email") : "";
+                }
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+                showNotification("❌ Error checking customer information");
+            }
+
+            // Skip contact dialog if customer exists with complete information
+            if (customerExists && !existingPhone.isEmpty() && !existingEmail.isEmpty()) {
+                BigDecimal amount = new BigDecimal(totalAmountField.getText());
+                LocalDate dueDate = dueDatePicker.getValue();
+
+                // Process credit directly with existing contact info
+                processCreditWithContactInfo(customerName, existingPhone, existingEmail,
+                        amount, dueDate, saleId, dialog);
+                return;
+            }
+
+            // Create a dialog for phone and email
+            Stage contactDialog = new Stage();
+            contactDialog.initModality(Modality.APPLICATION_MODAL);
+            contactDialog.initOwner(dialog.getScene().getWindow());
+            contactDialog.initStyle(StageStyle.UNDECORATED);
+
+            // Create dialog content
+            VBox dialogVbox = new VBox(10);
+            dialogVbox.setPadding(new Insets(20));
+            dialogVbox.setStyle("-fx-background-color: white; -fx-background-radius: 10; -fx-border-color: #81B29A; -fx-border-width: 2; -fx-border-radius: 10;");
+
+            // FIXED: Renamed to avoid conflict with outer titleLabel
+            Label contactTitleLabel = new Label("Customer Contact Information");
+            contactTitleLabel.setStyle("-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #81B29A;");
+
+            // Phone field with validation (numbers only)
+            MFXTextField phoneField = new MFXTextField();
+            phoneField.setPrefWidth(50);
+            phoneField.setPromptText("Phone Number");
+            phoneField.setFloatMode(io.github.palexdev.materialfx.enums.FloatMode.BORDER);
+            phoneField.setTextFormatter(new TextFormatter<>(change -> {
+                if (change.getControlNewText().matches("\\d*")) {
+                    return change;
+                }
+                return null;
+            }));
+
+            // Email field
+            MFXTextField emailField = new MFXTextField();
+            emailField.setPrefWidth(50);
+            emailField.setPromptText("Email Address");
+            emailField.setFloatMode(io.github.palexdev.materialfx.enums.FloatMode.BORDER);
+
+            // Buttons
+            MFXButton saveButton = new MFXButton("Save");
+            saveButton.setStyle("-fx-background-color: #81B29A; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5px;");
+
+            MFXButton skipButton = new MFXButton("Skip");
+            skipButton.setStyle("-fx-background-color: #808080; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 5px;");
+
+            // FIXED: Renamed to avoid conflict with outer buttonBox
+            HBox contactButtonBox = new HBox(10, saveButton, skipButton);
+            contactButtonBox.setAlignment(Pos.CENTER);
+
+            dialogVbox.getChildren().addAll(contactTitleLabel, phoneField, emailField, contactButtonBox);
+
+            // Save button action
+            saveButton.setOnAction(event -> {
+                // Validate email if provided
+                String email = emailField.getText().trim();
+                if (!email.isEmpty() && !email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+                    showNotification("❌ Invalid email format");
+                    return;
+                }
+
+                contactDialog.close();
+                processCreditWithContactInfo(customerName, phoneField.getText(), email,
+                        new BigDecimal(totalAmountField.getText()), dueDatePicker.getValue(), saleId, dialog);
+            });
+
+            // Skip button action
+            skipButton.setOnAction(event -> {
+                contactDialog.close();
+                processCreditWithContactInfo(customerName, "", "",
+                        new BigDecimal(totalAmountField.getText()), dueDatePicker.getValue(), saleId, dialog);
+            });
+
+            // Set up dialog visuals
+            setupDialogVisuals(dialogVbox, contactDialog);
+            contactDialog.showAndWait();
+        });
+
+        setupDialogVisuals(vbox, dialog);
+        dialog.show();
+    }
+
+    // Helper method to process credit with contact info
+    private void processCreditWithContactInfo(String customerName, String phone, String email,
+                                              BigDecimal amount, LocalDate dueDate, int saleId, Stage parentDialog) {
+        try {
+            // Record the credit and update customer contact info
+            try (Connection conn = DBConnect.getConnection()) {
+                // First check if customer exists
+                int customerId;
+                try (PreparedStatement checkStmt = conn.prepareStatement(
+                        "SELECT customer_id FROM customers WHERE name = ?")) {
+                    checkStmt.setString(1, customerName);
+                    ResultSet rs = checkStmt.executeQuery();
+
+                    if (rs.next()) {
+                        // Customer exists, update contact info
+                        customerId = rs.getInt("customer_id");
+                        try (PreparedStatement updateStmt = conn.prepareStatement(
+                                "UPDATE customers SET phone = ?, email = ? WHERE customer_id = ?")) {
+                            updateStmt.setString(1, phone);
+                            updateStmt.setString(2, email);
+                            updateStmt.setInt(3, customerId);
+                            updateStmt.executeUpdate();
+                        }
+                    } else {
+                        // Customer doesn't exist, create new
+                        try (PreparedStatement insertStmt = conn.prepareStatement(
+                                "INSERT INTO customers (name, phone, email) VALUES (?, ?, ?)",
+                                Statement.RETURN_GENERATED_KEYS)) {
+                            insertStmt.setString(1, customerName);
+                            insertStmt.setString(2, phone);
+                            insertStmt.setString(3, email);
+                            insertStmt.executeUpdate();
+
+                            ResultSet keys = insertStmt.getGeneratedKeys();
+                            if (keys.next()) {
+                                customerId = keys.getInt(1);
+                            } else {
+                                throw new SQLException("Creating customer failed, no ID obtained.");
+                            }
+                        }
+                    }
+                }
+
+                // Record the credit transaction
+                try (PreparedStatement creditStmt = conn.prepareStatement(
+                        "INSERT INTO credit_transactions (customer_id, amount, status, due_date, sale_id) VALUES (?, ?, ?, ?, ?)")) {
+                    creditStmt.setInt(1, customerId);
+                    creditStmt.setBigDecimal(2, amount);
+                    creditStmt.setString(3, "UNPAID");
+                    creditStmt.setDate(4, dueDate != null ? java.sql.Date.valueOf(dueDate) : null);
+                    creditStmt.setInt(5, saleId);
+                    creditStmt.executeUpdate();
+                }
+
+                // Update customer's credit balance
+                try (PreparedStatement balanceStmt = conn.prepareStatement(
+                        "UPDATE customers SET credit_balance = credit_balance + ? WHERE customer_id = ?")) {
+                    balanceStmt.setBigDecimal(1, amount);
+                    balanceStmt.setInt(2, customerId);
+                    balanceStmt.executeUpdate();
+                }
+            }
+
+            parentDialog.close();
+            salesTbl.getItems().clear();
+            updateTotalAmount();
+            showNotification("✅ Credit recorded successfully");
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            showNotification("❌ Error recording credit");
+        }
+    }
+
+    private void recordCreditSale(String customerName, BigDecimal amount, LocalDate dueDate, int saleId) {
+        try (Connection conn = DBConnect.getConnection()) {
+            conn.setAutoCommit(false);
+            try {
+                int customerId;
+                PreparedStatement checkStmt = conn.prepareStatement(
+                        "SELECT customer_id FROM customers WHERE name = ?");
+                checkStmt.setString(1, customerName);
+                ResultSet rs = checkStmt.executeQuery();
+                if (rs.next()) {
+                    customerId = rs.getInt("customer_id");
+                } else {
+                    PreparedStatement insertStmt = conn.prepareStatement(
+                            "INSERT INTO customers (name, credit_balance) VALUES (?, 0.00)",
+                            Statement.RETURN_GENERATED_KEYS);
+                    insertStmt.setString(1, customerName);
+                    insertStmt.executeUpdate();
+                    ResultSet generatedKeys = insertStmt.getGeneratedKeys();
+                    if (generatedKeys.next()) {
+                        customerId = generatedKeys.getInt(1);
+                    } else {
+                        throw new SQLException("Failed to create customer");
+                    }
+                }
+
+                PreparedStatement txStmt = conn.prepareStatement(
+                        "INSERT INTO credit_transactions (customer_id, amount, status, due_date, sale_id) VALUES (?, ?, 'UNPAID', ?, ?)");
+                txStmt.setInt(1, customerId);
+                txStmt.setBigDecimal(2, amount);
+                txStmt.setDate(3, java.sql.Date.valueOf(dueDate));
+                txStmt.setInt(4, saleId);
+                txStmt.executeUpdate();
+
+                PreparedStatement updateStmt = conn.prepareStatement(
+                        "UPDATE customers SET credit_balance = credit_balance + ? WHERE customer_id = ?");
+                updateStmt.setBigDecimal(1, amount);
+                updateStmt.setInt(2, customerId);
+                updateStmt.executeUpdate();
+
+                conn.commit();
+            } catch (SQLException e) {
+                conn.rollback();
+                throw e;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            showNotification("❌ Error recording credit sale: " + e.getMessage());
+        }
     }
 
     private void updateProgress(double progress) {
@@ -618,6 +1005,7 @@ public class SalesController {
         // Configure scene with transparent background
         Scene scene = new Scene(root);
         scene.setFill(Color.TRANSPARENT);
+        scene.getStylesheets().add(getClass().getResource("/css/sales.css").toExternalForm());
         stage.setScene(scene);
 
         // Apply rounded corners
@@ -639,8 +1027,14 @@ public class SalesController {
         shadowReceiver.setPrefSize(root.prefWidth(-1) - 2, root.prefHeight(-1) - 2);
         shadowReceiver.setEffect(dropShadow);
 
-        // Insert shadow receiver behind other content
-        ((AnchorPane)root).getChildren().add(0, shadowReceiver);
+        // Insert shadow receiver behind other content based on layout type
+        if (root instanceof AnchorPane) {
+            ((AnchorPane)root).getChildren().add(0, shadowReceiver);
+        } else if (root instanceof VBox) {
+            ((VBox)root).getChildren().add(0, shadowReceiver);
+        } else if (root instanceof Pane) {
+            ((Pane)root).getChildren().add(0, shadowReceiver);
+        }
 
         // Adjust clip and shadow receiver on resize
         root.layoutBoundsProperty().addListener((observable, oldValue, newValue) -> {
