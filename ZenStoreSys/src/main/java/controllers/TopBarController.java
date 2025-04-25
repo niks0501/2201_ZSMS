@@ -27,6 +27,9 @@ public class TopBarController {
     private StackPane contentPane;
 
     @FXML
+    private Button btnCredits;
+
+    @FXML
     private Button btnDashboard;
 
     @FXML
@@ -41,6 +44,7 @@ public class TopBarController {
         // Add event handler for product button
         btnProduct.setOnAction(event -> loadProductsView());
         btnSales.setOnAction(event -> loadSalesView());
+        btnCredits.setOnAction(event -> loadCreditsView());
 
         // Set up ProductLoadService handlers once and for all
         ProductLoadService productService = ProductLoadService.getInstance();
@@ -79,6 +83,65 @@ public class TopBarController {
     }
 
     @FXML
+    private void loadCreditsView() {
+        // Prevent multiple concurrent loading operations
+        if (isLoading) {
+            return;
+        }
+
+        isLoading = true;
+        btnCredits.setDisable(true);
+
+        // Show loading indicator
+        ProgressIndicator loadingIndicator = new ProgressIndicator();
+        loadingIndicator.setMaxSize(100, 100);
+
+        if (contentPane != null) {
+            contentPane.getChildren().clear();
+            contentPane.getChildren().add(loadingIndicator);
+
+            // Load FXML in background thread
+            Thread loaderThread = new Thread(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/company/zenstoresys/credits.fxml"));
+                    StackPane creditsView = loader.load();
+                    creditsView.getStylesheets().add(getClass().getResource("/css/credits.css").toExternalForm());
+
+                    // Update UI on JavaFX thread when ready
+                    Platform.runLater(() -> {
+                        contentPane.getChildren().clear();
+                        creditsView.setOpacity(0);
+                        contentPane.getChildren().add(creditsView);
+
+                        // Fade in the view immediately
+                        FadeTransition fadeIn = new FadeTransition(Duration.millis(200), creditsView);
+                        fadeIn.setFromValue(0);
+                        fadeIn.setToValue(1);
+                        fadeIn.setInterpolator(Interpolator.EASE_BOTH);
+                        fadeIn.setOnFinished(e -> {
+                            isLoading = false;
+                            btnCredits.setDisable(false);
+                        });
+                        fadeIn.play();
+                    });
+                } catch (IOException e) {
+                    Platform.runLater(() -> {
+                        contentPane.getChildren().clear();
+                        Label errorLabel = new Label("Error loading content: " + e.getMessage());
+                        contentPane.getChildren().add(errorLabel);
+                        isLoading = false;
+                        btnCredits.setDisable(false);
+                    });
+                    e.printStackTrace();
+                }
+            });
+
+            loaderThread.setDaemon(true);
+            loaderThread.start();
+        }
+    }
+
+    @FXML
     private void loadSalesView() {
         // Prevent multiple concurrent loading operations
         if (isLoading) {
@@ -109,7 +172,7 @@ public class TopBarController {
                         salesView.setOpacity(0);
                         contentPane.getChildren().add(salesView);
 
-                        // Just fade in the view immediately
+                        // Fade in the view immediately
                         FadeTransition fadeIn = new FadeTransition(Duration.millis(200), salesView);
                         fadeIn.setFromValue(0);
                         fadeIn.setToValue(1);
@@ -167,7 +230,7 @@ public class TopBarController {
                         productsView.setOpacity(0);
                         contentPane.getChildren().add(productsView);
 
-                        // Just fade in the view immediately
+                        // Fade in the view immediately
                         FadeTransition fadeIn = new FadeTransition(Duration.millis(200), productsView);
                         fadeIn.setFromValue(0);
                         fadeIn.setToValue(1);

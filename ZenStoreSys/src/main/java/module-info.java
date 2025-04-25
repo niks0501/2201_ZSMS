@@ -12,6 +12,7 @@ module com.company.zenstoresys {
     requires org.slf4j.nop;
     requires org.apache.pdfbox;
     requires org.apache.pdfbox.io;
+    requires java.mail;
 
 
     opens controllers to javafx.fxml;

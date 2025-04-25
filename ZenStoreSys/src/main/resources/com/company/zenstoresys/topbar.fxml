@@ -62,6 +62,18 @@
                   <Font name="Open Sans Bold" size="14.0" />
                </font>
             </Button>
+            <Button id="btnCredits" fx:id="btnCredits" alignment="CENTER" graphicTextGap="20.0" mnemonicParsing="false" prefHeight="38.0" prefWidth="180.0" style="-fx-background-color: transparent;" text="Credits" GridPane.columnIndex="1">
+               <graphic>
+                  <ImageView fitHeight="37.0" fitWidth="41.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../img/loan.png" />
+                     </image>
+                  </ImageView>
+               </graphic>
+               <font>
+                  <Font name="Open Sans Bold" size="14.0" />
+               </font>
+            </Button>
          </children>
       </GridPane>
    </children>

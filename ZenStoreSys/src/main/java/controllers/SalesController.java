@@ -460,7 +460,7 @@ public class SalesController {
 
             // Phone field with validation (numbers only)
             MFXTextField phoneField = new MFXTextField();
-            phoneField.setPrefWidth(50);
+            phoneField.setPrefWidth(100);
             phoneField.setPromptText("Phone Number");
             phoneField.setFloatMode(io.github.palexdev.materialfx.enums.FloatMode.BORDER);
             phoneField.setTextFormatter(new TextFormatter<>(change -> {
@@ -472,7 +472,7 @@ public class SalesController {
 
             // Email field
             MFXTextField emailField = new MFXTextField();
-            emailField.setPrefWidth(50);
+            emailField.setPrefWidth(100);
             emailField.setPromptText("Email Address");
             emailField.setFloatMode(io.github.palexdev.materialfx.enums.FloatMode.BORDER);
 

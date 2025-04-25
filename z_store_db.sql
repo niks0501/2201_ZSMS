@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 24, 2025 at 07:02 PM
+-- Generation Time: Apr 25, 2025 at 05:16 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -235,17 +235,48 @@ CREATE TABLE `credit_transactions` (
 --
 
 INSERT INTO `credit_transactions` (`transaction_id`, `customer_id`, `amount`, `transaction_date`, `status`, `due_date`, `sale_id`) VALUES
-(1, 2, 88.91, '2025-04-24 13:00:02', 'UNPAID', '2025-05-01', 13),
-(2, 3, 53.60, '2025-04-24 14:17:06', 'UNPAID', '2025-05-01', 16),
-(3, 4, 133.00, '2025-04-24 14:52:24', 'UNPAID', '2025-05-01', 19),
-(4, 5, 72.11, '2025-04-24 15:17:20', 'UNPAID', '2025-05-01', 22),
-(5, 6, 58.51, '2025-04-24 15:25:31', 'UNPAID', '2025-05-01', 23),
+(1, 2, 88.91, '2025-04-24 13:00:02', 'PAID', '2025-04-26', 13),
+(2, 3, 53.60, '2025-04-24 14:17:06', 'PAID', '2025-05-01', 16),
+(3, 4, 133.00, '2025-04-24 14:52:24', 'PAID', '2025-05-01', 19),
+(4, 5, 72.11, '2025-04-24 15:17:20', 'PAID', '2025-05-01', 22),
+(5, 6, 58.51, '2025-04-24 15:25:31', 'PAID', '2025-05-01', 23),
 (6, 7, 58.11, '2025-04-24 15:31:09', 'UNPAID', '2025-05-01', 24),
-(7, 8, 434.50, '2025-04-24 15:52:36', 'UNPAID', '2025-05-01', 29),
-(8, 9, 48.60, '2025-04-24 15:56:11', 'UNPAID', '2025-05-01', 30),
-(9, 10, 124.00, '2025-04-24 16:13:40', 'UNPAID', '2025-05-02', 32),
-(10, 10, 45.85, '2025-04-24 16:16:26', 'UNPAID', '2025-05-02', 33),
-(11, 10, 264.00, '2025-04-24 16:25:17', 'UNPAID', '2025-05-02', 34);
+(7, 8, 434.50, '2025-04-24 15:52:36', 'UNPAID', '2025-04-26', 29),
+(8, 9, 48.60, '2025-04-24 15:56:11', 'UNPAID', '2025-04-26', 30),
+(9, 10, 124.00, '2025-04-24 16:13:40', 'PAID', '2025-05-02', 32),
+(10, 10, 45.85, '2025-04-24 16:16:26', 'PAID', '2025-05-02', 33),
+(11, 10, 264.00, '2025-04-24 16:25:17', 'PAID', '2025-05-02', 34);
+
+--
+-- Triggers `credit_transactions`
+--
+DELIMITER $$
+CREATE TRIGGER `update_credit_balance_after_payment` AFTER UPDATE ON `credit_transactions` FOR EACH ROW BEGIN
+    -- Check if status was changed to 'PAID'
+    IF OLD.status = 'UNPAID' AND NEW.status = 'PAID' THEN
+        -- Subtract the transaction amount from customer's credit balance
+        UPDATE customers
+        SET credit_balance = credit_balance - NEW.amount
+        WHERE customer_id = NEW.customer_id;
+    END IF;
+END
+$$
+DELIMITER ;
+
+-- --------------------------------------------------------
+
+--
+-- Stand-in structure for view `credit_transactions_view`
+-- (See below for the actual view)
+--
+CREATE TABLE `credit_transactions_view` (
+`transaction_id` int(11)
+,`customer_name` varchar(100)
+,`amount` decimal(10,2)
+,`transaction_date` timestamp
+,`due_date` date
+,`status` enum('PAID','UNPAID')
+);
 
 -- --------------------------------------------------------
 
@@ -267,15 +298,15 @@ CREATE TABLE `customers` (
 --
 
 INSERT INTO `customers` (`customer_id`, `name`, `credit_balance`, `phone`, `email`, `created_at`) VALUES
-(2, 'Nikko Causapin', 88.91, NULL, NULL, '2025-04-24 13:00:02'),
-(3, 'Lance Malata', 53.60, NULL, NULL, '2025-04-24 14:17:06'),
-(4, 'Ley Vasquez', 133.00, NULL, NULL, '2025-04-24 14:52:24'),
-(5, 'Allend Andaya', 72.11, '09342314522', 'allendandaya@gmail.com', '2025-04-24 15:17:20'),
-(6, 'David Gludo', 58.51, '09345345345', 'davidgludo@gmail.com', '2025-04-24 15:25:31'),
+(2, 'Nikko Causapin', -88.91, NULL, NULL, '2025-04-24 13:00:02'),
+(3, 'Lance Malata', 0.00, NULL, NULL, '2025-04-24 14:17:06'),
+(4, 'Ley Vasquez', 0.00, NULL, NULL, '2025-04-24 14:52:24'),
+(5, 'Allend Andaya', 0.00, '09342314522', 'allendandaya@gmail.com', '2025-04-24 15:17:20'),
+(6, 'David Gludo', 0.00, '09345345345', 'davidgludo@gmail.com', '2025-04-24 15:25:31'),
 (7, 'Marlo Condicion', 58.11, '09458641321', 'marlocondicion@gmail.com', '2025-04-24 15:31:09'),
-(8, 'Cha Hae In', 434.50, '09897564121', 'chahaein@gmail.com', '2025-04-24 15:52:36'),
-(9, 'Pierre Celso', 48.60, '', '', '2025-04-24 15:56:11'),
-(10, 'Charles Samontanez', 433.85, '', '', '2025-04-24 16:13:40');
+(8, 'Cha Hae In', 434.50, '09897564121', 'nikkocausapin61@gmail.com', '2025-04-24 15:52:36'),
+(9, 'Pierre Celso', 48.60, '', 'fapps761@gmail.com', '2025-04-24 15:56:11'),
+(10, 'Charles Samontanez', -264.00, '', '', '2025-04-24 16:13:40');
 
 -- --------------------------------------------------------
 
@@ -408,7 +439,7 @@ INSERT INTO `products` (`product_id`, `image_path`, `name`, `category_id`, `cost
 (24, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744877464451.png', 'erqerqerewrtwrt', 9, 45.00, 4.00, 10, 46.80, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_24.png', '2025-04-17 08:11:04'),
 (25, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744878215564.png', 'ryuityiryee', 7, 53.00, 7.00, 10, 56.71, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_25.png', '2025-04-17 08:23:35'),
 (42, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744881889420.png', '34t98wehfh489tb', 7, 50.00, 10.00, 30, 55.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_42.png', '2025-04-17 09:24:49'),
-(43, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_43_1744898290811.png', 'selwyn', 4, 500.00, 10.00, 40, 550.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_43.png', '2025-04-17 13:57:25');
+(43, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_43_1744898290811.png', 'selwyn', 4, 500.00, 10.00, 50, 550.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_43.png', '2025-04-17 13:57:25');
 
 -- --------------------------------------------------------
 
@@ -453,13 +484,13 @@ INSERT INTO `sales` (`sale_id`, `total_price`, `sale_date`) VALUES
 (10, 661.71, '2025-04-24 12:48:17'),
 (11, 95.40, '2025-04-24 12:55:21'),
 (12, 264.00, '2025-04-24 12:56:12'),
-(13, 138.91, '2025-04-24 12:59:13'),
+(13, 227.82, '2025-04-24 12:59:13'),
 (14, 390.00, '2025-04-24 14:08:15'),
 (15, 13.20, '2025-04-24 14:13:55'),
 (16, 103.60, '2025-04-24 14:16:25'),
 (17, 120.00, '2025-04-24 14:29:11'),
 (18, 264.00, '2025-04-24 14:44:31'),
-(19, 0.00, '2025-04-24 14:51:02'),
+(19, 133.00, '2025-04-24 14:51:02'),
 (20, 30.00, '2025-04-24 15:00:39'),
 (21, 942.40, '2025-04-24 15:04:19'),
 (22, 0.00, '2025-04-24 15:16:27'),
@@ -738,6 +769,15 @@ ALTER TABLE `sales`
 --
 ALTER TABLE `sales_items`
   MODIFY `sale_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+
+-- --------------------------------------------------------
+
+--
+-- Structure for view `credit_transactions_view`
+--
+DROP TABLE IF EXISTS `credit_transactions_view`;
+
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `credit_transactions_view`  AS SELECT `ct`.`transaction_id` AS `transaction_id`, `c`.`name` AS `customer_name`, `ct`.`amount` AS `amount`, `ct`.`transaction_date` AS `transaction_date`, `ct`.`due_date` AS `due_date`, `ct`.`status` AS `status` FROM (`credit_transactions` `ct` join `customers` `c` on(`ct`.`customer_id` = `c`.`customer_id`)) ;
 
 -- --------------------------------------------------------
 
