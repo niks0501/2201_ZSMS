@@ -96,6 +96,7 @@ public class CreditsController implements Initializable {
     private final int ROWS_PER_PAGE = 10;
     private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("MMM dd, yyyy");
     private String currentSortOption = "Oldest to Newest";
+    private long lastErrorDialogTime = 0;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -286,19 +287,31 @@ public class CreditsController implements Initializable {
 
                         // If it's already PAID, prevent changes
                         if ("PAID".equals(originalStatus)) {
-                            // Show error message
-                            Alert errorDialog = new Alert(Alert.AlertType.ERROR);
-                            errorDialog.setTitle("Cannot Modify Status");
-                            errorDialog.setHeaderText("Paid transactions cannot be modified");
-                            errorDialog.setContentText("This transaction has already been marked as PAID and cannot be changed.");
-                            errorDialog.showAndWait();
+                            // Get current time
+                            long currentTime = System.currentTimeMillis();
 
-                            // Reset to original value
-                            comboBox.setValue(originalStatus);
+                            // Only show dialog if enough time has passed since last dialog (300 ms threshold)
+                            if (currentTime - lastErrorDialogTime > 300) {
+                                lastErrorDialogTime = currentTime;
 
-                            // Reset cell display without updating
-                            cell.setGraphic(null);
-                            cell.setText(originalStatus);
+                                // Reset to original value immediately
+                                comboBox.setValue(originalStatus);
+                                cell.setGraphic(null);
+                                cell.setText(originalStatus);
+
+                                // Create and show dialog
+                                Alert errorDialog = new Alert(Alert.AlertType.ERROR);
+                                errorDialog.setTitle("Cannot Modify Status");
+                                errorDialog.setHeaderText("Paid transactions cannot be modified");
+                                errorDialog.setContentText("This transaction has already been marked as PAID and cannot be changed.");
+                                errorDialog.showAndWait();
+                            } else {
+                                // Silently reset without showing dialog
+                                comboBox.setValue(originalStatus);
+                                cell.setGraphic(null);
+                                cell.setText(originalStatus);
+                            }
+
                             Platform.runLater(() -> cell.getTableView().requestFocus());
                             return;
                         }
