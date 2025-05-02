@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 25, 2025 at 05:16 PM
+-- Generation Time: May 02, 2025 at 11:35 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -241,11 +241,13 @@ INSERT INTO `credit_transactions` (`transaction_id`, `customer_id`, `amount`, `t
 (4, 5, 72.11, '2025-04-24 15:17:20', 'PAID', '2025-05-01', 22),
 (5, 6, 58.51, '2025-04-24 15:25:31', 'PAID', '2025-05-01', 23),
 (6, 7, 58.11, '2025-04-24 15:31:09', 'UNPAID', '2025-05-01', 24),
-(7, 8, 434.50, '2025-04-24 15:52:36', 'UNPAID', '2025-04-26', 29),
-(8, 9, 48.60, '2025-04-24 15:56:11', 'UNPAID', '2025-04-26', 30),
+(7, 8, 434.50, '2025-04-24 15:52:36', 'UNPAID', '2025-04-27', 29),
+(8, 9, 48.60, '2025-04-24 15:56:11', 'UNPAID', '2025-04-27', 30),
 (9, 10, 124.00, '2025-04-24 16:13:40', 'PAID', '2025-05-02', 32),
 (10, 10, 45.85, '2025-04-24 16:16:26', 'PAID', '2025-05-02', 33),
-(11, 10, 264.00, '2025-04-24 16:25:17', 'PAID', '2025-05-02', 34);
+(11, 10, 264.00, '2025-04-24 16:25:17', 'PAID', '2025-05-02', 34),
+(12, 11, 105.60, '2025-04-26 03:21:33', 'UNPAID', '2025-04-27', 35),
+(13, 12, 842.00, '2025-04-26 07:21:02', 'UNPAID', '2025-04-27', 37);
 
 --
 -- Triggers `credit_transactions`
@@ -306,7 +308,9 @@ INSERT INTO `customers` (`customer_id`, `name`, `credit_balance`, `phone`, `emai
 (7, 'Marlo Condicion', 58.11, '09458641321', 'marlocondicion@gmail.com', '2025-04-24 15:31:09'),
 (8, 'Cha Hae In', 434.50, '09897564121', 'nikkocausapin61@gmail.com', '2025-04-24 15:52:36'),
 (9, 'Pierre Celso', 48.60, '', 'fapps761@gmail.com', '2025-04-24 15:56:11'),
-(10, 'Charles Samontanez', -264.00, '', '', '2025-04-24 16:13:40');
+(10, 'Charles Samontanez', -264.00, '', '', '2025-04-24 16:13:40'),
+(11, 'Clinton John', 105.60, '0967057657567567', 'lancemalata82@gmail.com', '2025-04-26 03:21:33'),
+(12, 'Marlo', 842.00, '0996855868475', '23-76558@g.batstate-u.edu.ph', '2025-04-26 07:21:02');
 
 -- --------------------------------------------------------
 
@@ -331,15 +335,15 @@ CREATE TABLE `discounts` (
 --
 
 INSERT INTO `discounts` (`discount_id`, `product_id`, `category_id`, `discount_type`, `discount_value`, `min_quantity`, `start_date`, `end_date`, `is_active`) VALUES
-(1, 8, NULL, 'BULK', 10.00, 3, '2025-04-21 00:00:00', '2025-04-22 00:00:00', 1),
-(2, NULL, 3, 'FIXED', 5.00, 1, '2025-04-21 00:00:00', '2025-04-23 00:00:00', 1),
-(3, 2, NULL, 'BOGO', 15.00, 5, '2025-04-21 00:00:00', '2025-04-22 00:00:00', 1),
-(4, NULL, 5, 'PERCENTAGE', 10.00, 1, '2025-04-21 00:00:00', '2025-04-24 00:00:00', 1),
+(1, 8, NULL, 'BULK', 10.00, 3, '2025-04-21 00:00:00', '2025-04-22 00:00:00', 0),
+(2, NULL, 3, 'FIXED', 5.00, 1, '2025-04-21 00:00:00', '2025-04-23 00:00:00', 0),
+(3, 2, NULL, 'BOGO', 15.00, 5, '2025-04-21 00:00:00', '2025-04-22 00:00:00', 0),
+(4, NULL, 5, 'PERCENTAGE', 10.00, 1, '2025-04-21 00:00:00', '2025-04-24 00:00:00', 0),
 (5, 43, NULL, 'FIXED', 10.00, 1, '2025-04-21 00:00:00', '2025-04-26 00:00:00', 1),
 (6, NULL, 7, 'PERCENTAGE', 10.00, 1, '2025-04-21 00:00:00', '2025-04-30 00:00:00', 1),
 (7, NULL, 9, 'BULK', 20.00, 5, '2025-04-21 00:00:00', '2025-04-28 00:00:00', 1),
 (8, 12, NULL, 'PERCENTAGE', 10.00, 1, '2025-04-21 00:00:00', '2025-04-28 00:00:00', 1),
-(9, NULL, 1, 'BOGO', 10.00, 2, '2025-04-21 00:00:00', '2025-05-10 00:00:00', 1);
+(9, NULL, 1, 'BOGO', 10.00, 2, '2025-04-21 00:00:00', '2025-04-25 00:00:00', 0);
 
 --
 -- Triggers `discounts`
@@ -437,9 +441,9 @@ INSERT INTO `products` (`product_id`, `image_path`, `name`, `category_id`, `cost
 (21, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744876776539.jpg', 'Tide', 5, 12.00, 10.00, 30, 13.20, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_21.png', '2025-04-17 07:59:36'),
 (23, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744877222046.png', 'Palmolive', 8, 30.00, 18.00, 10, 35.40, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_23.png', '2025-04-17 08:07:02'),
 (24, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744877464451.png', 'erqerqerewrtwrt', 9, 45.00, 4.00, 10, 46.80, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_24.png', '2025-04-17 08:11:04'),
-(25, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744878215564.png', 'ryuityiryee', 7, 53.00, 7.00, 10, 56.71, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_25.png', '2025-04-17 08:23:35'),
+(25, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744878215564.png', 'ryuityiryee', 7, 53.00, 7.00, 20, 56.71, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_25.png', '2025-04-17 08:23:35'),
 (42, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_1744881889420.png', '34t98wehfh489tb', 7, 50.00, 10.00, 30, 55.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_42.png', '2025-04-17 09:24:49'),
-(43, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_43_1744898290811.png', 'selwyn', 4, 500.00, 10.00, 50, 550.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_43.png', '2025-04-17 13:57:25');
+(43, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\productImage\\product_43_1744898290811.png', 'selwyn', 4, 500.00, 12.00, 50, 560.00, 'C:\\Users\\Nikko\\Documents\\IntelliJ IDEA Projects\\ZenStore\\ZenStoreSys\\src\\main\\resources\\barcodes\\barcode_43.png', '2025-04-17 13:57:25');
 
 -- --------------------------------------------------------
 
@@ -505,7 +509,12 @@ INSERT INTO `sales` (`sale_id`, `total_price`, `sale_date`) VALUES
 (31, 264.00, '2025-04-24 16:12:02'),
 (32, 0.00, '2025-04-24 16:12:48'),
 (33, 50.00, '2025-04-24 16:15:30'),
-(34, 0.00, '2025-04-24 16:24:32');
+(34, 0.00, '2025-04-24 16:24:32'),
+(35, 500.00, '2025-04-26 03:20:15'),
+(36, 603.90, '2025-04-26 07:17:54'),
+(37, 5.00, '2025-04-26 07:19:45'),
+(38, 632.00, '2025-05-01 13:27:16'),
+(39, 390.00, '2025-05-02 07:07:55');
 
 -- --------------------------------------------------------
 
@@ -629,7 +638,29 @@ INSERT INTO `sales_items` (`sale_item_id`, `sale_id`, `product_id`, `quantity`, 
 (100, 33, 23, 1, 35.40, 35.40),
 (101, 33, 20, 1, 13.65, 13.65),
 (102, 34, 2, 1, 132.00, 132.00),
-(103, 34, 8, 1, 132.00, 132.00);
+(103, 34, 8, 1, 132.00, 132.00),
+(104, 35, 8, 1, 132.00, 132.00),
+(105, 35, 9, 1, 110.00, 110.00),
+(106, 35, 2, 2, 264.00, 105.60),
+(107, 35, 3, 1, 126.00, 126.00),
+(108, 35, 5, 1, 132.00, 132.00),
+(109, 36, 2, 1, 132.00, 132.00),
+(110, 36, 3, 1, 126.00, 126.00),
+(111, 36, 5, 1, 132.00, 132.00),
+(112, 36, 8, 1, 132.00, 132.00),
+(113, 36, 20, 6, 81.90, 81.90),
+(114, 37, 5, 1, 132.00, 132.00),
+(115, 37, 8, 1, 132.00, 132.00),
+(116, 37, 10, 1, 23.00, 23.00),
+(117, 37, 43, 1, 560.00, 560.00),
+(118, 38, 2, 1, 132.00, 132.00),
+(119, 38, 3, 1, 126.00, 126.00),
+(120, 38, 5, 1, 132.00, 132.00),
+(121, 38, 8, 1, 132.00, 132.00),
+(122, 38, 9, 1, 110.00, 110.00),
+(123, 39, 2, 1, 132.00, 132.00),
+(124, 39, 3, 1, 126.00, 126.00),
+(125, 39, 5, 1, 132.00, 132.00);
 
 --
 -- Indexes for dumped tables
@@ -720,19 +751,19 @@ ALTER TABLE `admin`
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
+  MODIFY `category_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `credit_transactions`
 --
 ALTER TABLE `credit_transactions`
-  MODIFY `transaction_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `transaction_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
 
 --
 -- AUTO_INCREMENT for table `customers`
 --
 ALTER TABLE `customers`
-  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
+  MODIFY `customer_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
 
 --
 -- AUTO_INCREMENT for table `discounts`
@@ -762,13 +793,13 @@ ALTER TABLE `product_prices`
 -- AUTO_INCREMENT for table `sales`
 --
 ALTER TABLE `sales`
-  MODIFY `sale_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=35;
+  MODIFY `sale_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
 
 --
 -- AUTO_INCREMENT for table `sales_items`
 --
 ALTER TABLE `sales_items`
-  MODIFY `sale_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=104;
+  MODIFY `sale_item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=126;
 
 -- --------------------------------------------------------
 

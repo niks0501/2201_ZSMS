@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.palexdev.materialfx.controls.MFXButton?>
+<?import io.github.palexdev.materialfx.controls.MFXComboBox?>
+<?import java.lang.String?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Line?>
+<?import javafx.scene.text.Font?>
+
+<StackPane fx:id="reportsMainFrame" prefHeight="646.0" prefWidth="1080.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.ReportsController">
+   <children>
+      <AnchorPane prefHeight="646.0" prefWidth="1080.0" style="-fx-background-color: #F5EBE0;">
+         <children>
+            <Pane fx:id="reportsContentPane" layoutX="25.0" layoutY="32.0" prefHeight="583.0" prefWidth="1030.0" style="-fx-background-color: white;">
+               <children>
+                  <Line endX="-100.0" endY="48.0" layoutX="119.0" layoutY="19.0" startX="-100.0" stroke="#81b29a" strokeWidth="10.0" />
+                  <Label layoutX="24.0" layoutY="14.0" prefHeight="44.0" prefWidth="203.0" text="ZSariSmart">
+                     <font>
+                        <Font name="Inter 18pt ExtraBold" size="35.0" />
+                     </font>
+                  </Label>
+                  <Label layoutX="24.0" layoutY="46.0" prefHeight="25.0" prefWidth="174.0" text="Reports">
+                     <font>
+                        <Font name="Source Sans 3 SemiBold" size="16.0" />
+                     </font>
+                  </Label>
+                  <ScrollPane fx:id="vboxContainer" layoutX="96.0" layoutY="106.0" prefHeight="419.0" prefWidth="840.0">
+                    <content>
+                      <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="393.0" prefWidth="812.0">
+                           <children>
+                              <VBox fx:id="fileContainer" prefHeight="393.0" prefWidth="812.0" />
+                           </children>
+                        </AnchorPane>
+                    </content>
+                  </ScrollPane>
+                  <StackPane fx:id="genReportContainer" layoutX="-27.0" layoutY="138.0" prefHeight="291.5" prefWidth="500.0" visible="false" />
+                  <Label layoutX="381.0" layoutY="525.0" prefHeight="44.0" prefWidth="269.0" text="Sale Reports">
+                     <font>
+                        <Font name="Inter 18pt ExtraBold" size="35.0" />
+                     </font>
+                     <graphic>
+                        <ImageView fitHeight="42.0" fitWidth="39.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../img/file-import.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Label>
+                  <MFXButton id="refreshReloadFile" fx:id="refreshReloadFile" buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" depthLevel="LEVEL1" layoutX="104.0" layoutY="72.0" prefHeight="29.0" prefWidth="44.0" style="-fx-background-color: transparent;">
+                     <graphic>
+                        <ImageView fitHeight="21.0" fitWidth="22.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../img/reload.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </MFXButton>
+                  <MFXComboBox id="sortFile" fx:id="sortFile" floatMode="BORDER" floatingText="Sort" layoutX="781.0" layoutY="70.0" minHeight="0.0" minWidth="0.0" prefHeight="29.0" prefWidth="153.0">
+                     <styleClass>
+                        <String fx:value="mfx-combo-box" />
+                        <String fx:value="mfx-combo-box-cell" />
+                     </styleClass>
+                  </MFXComboBox>
+                  <ImageView fitHeight="25.0" fitWidth="23.0" layoutX="758.0" layoutY="73.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../img/filter(1).png" />
+                     </image>
+                  </ImageView>
+               </children>
+            </Pane>
+            <Button id="btnPullReport" fx:id="btnPullReport" contentDisplay="GRAPHIC_ONLY" layoutX="-14.0" layoutY="235.0" mnemonicParsing="false" prefHeight="177.0" prefWidth="28.0" style="-fx-background-color: #81B29A; -fx-border-color: black; -fx-border-width: 2;" text="Button" />
+         </children>
+      </AnchorPane>
+   </children>
+</StackPane>

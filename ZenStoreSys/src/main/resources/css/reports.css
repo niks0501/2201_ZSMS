@@ -1,0 +1,130 @@
+#reportsContentPane {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 20px;
+    -fx-border-radius: 20px;
+    -fx-border-color: #dddddd;
+    -fx-border-width: 1px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 10, 0.2, 0.1, 0);
+}
+
+#vboxContainer {
+    -fx-background-color: #F5EBE0;
+    -fx-padding: 10;
+    -fx-border-color: #81B29A;
+    -fx-border-width: 2;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+}
+
+#vboxContainer .viewport {
+    -fx-background-color: transparent;
+}
+
+#vboxContainer .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+
+#vboxContainer .thumb {
+    -fx-background-color: #81B29A;
+    -fx-background-radius: 6;
+}
+
+#btnPullReport {
+    -fx-background-radius: 10px;
+    -fx-border-radius: 10px;
+
+}
+
+#btnPullReport:hover {
+    -fx-scale-x: 1.05;
+    -fx-scale-y: 1.05;
+}
+
+#btnPullReport:pressed {
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+#genReportContainer {
+    -fx-background-color: white; /* Needed to see the shape and shadow */
+    -fx-background-radius: 15px; /* Adjust radius as needed */
+    -fx-border-radius: 15px;     /* Match background radius */
+    -fx-border-color: #81B29A;
+    -fx-border-width: 2px;       /* Adjust border width as needed */
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 10, 0.5, 2, 2); /* Adjust shadow parameters as needed */
+}
+
+.file-button {
+    -fx-background-color: white;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-border-color: #E0E0E0;
+    -fx-border-width: 1;
+    -fx-padding: 10;
+    -fx-font-size: 16px;
+    -fx-text-fill: #333333;
+    -fx-alignment: CENTER_LEFT;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 5, 0, 0, 2);
+}
+
+.file-button:hover {
+    -fx-background-color: #E8F0EE;
+    -fx-border-color: #81B29A;
+}
+
+.file-button:pressed {
+    -fx-background-color: #D0E0DC;
+}
+
+#refreshReloadFile:hover{
+    -fx-scale-x: 1.1;
+    -fx-scale-y: 1.1;
+}
+
+#refreshReloadFile:pressed{
+    -fx-scale-x: 0.95;
+    -fx-scale-y: 0.95;
+}
+
+#sortFile {
+    -fx-border-radius: 8px;         /* Rounded edges */
+    -fx-background-radius: 8px;     /* Ensures smooth rounding */
+    -fx-border-color: green;      /* Slightly darker green border */
+    -fx-border-width: 2px;
+}
+
+#sortFile .floating-text {
+    -fx-text-fill: -mfx-charcoal; /* Text color */
+    -fx-font-size: 14px;
+    -fx-font-family: "Open Sans";
+    -fx-font-weight: bold;
+}
+
+.file-context-menu {
+    -fx-background-color: white;
+    -fx-border-color: #81B29A;
+    -fx-border-width: 1px;
+    -fx-border-radius: 4px;
+    -fx-background-radius: 4px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 8, 0, 0, 3);
+    -fx-min-width: 120px; /* Increase minimum width */
+}
+
+.file-context-menu .menu-item {
+    -fx-background-radius: 3px;
+    -fx-padding: 8px 12px; /* Increase padding (top/bottom, left/right) */
+}
+
+.file-context-menu .menu-item:focused {
+    -fx-background-color: #81B29A;
+}
+
+.file-context-menu .menu-item:focused .label {
+    -fx-text-fill: white;
+}
+
+.file-context-menu .menu-item .label {
+    -fx-text-fill: #333333;
+    -fx-font-size: 15px;
+}
+

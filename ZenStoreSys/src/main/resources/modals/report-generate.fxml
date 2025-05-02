@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.palexdev.materialfx.controls.MFXButton?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane fx:id="genReportMainFrame" prefHeight="283.0" prefWidth="487.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.GenerateReportController">
+   <children>
+      <Label layoutX="79.0" layoutY="14.0" prefHeight="44.0" prefWidth="342.0" text="Generate Report">
+         <font>
+            <Font name="Inter 18pt ExtraBold" size="35.0" />
+         </font>
+         <graphic>
+            <ImageView fitHeight="44.0" fitWidth="45.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/report_ui.png" />
+               </image>
+            </ImageView>
+         </graphic>
+      </Label>
+      <MFXButton id="btnDaily" fx:id="btnDaily" buttonType="RAISED" depthLevel="LEVEL1" graphicTextGap="10.0" layoutX="109.0" layoutY="65.0" prefHeight="44.0" prefWidth="282.0" rippleColor="WHITE" text="Daily" textFill="WHITE">
+         <graphic>
+            <ImageView fitHeight="48.0" fitWidth="55.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/checklist.png" />
+               </image>
+            </ImageView>
+         </graphic>
+         <font>
+            <Font name="Open Sans Bold" size="22.0" />
+         </font>
+      </MFXButton>
+      <MFXButton id="btnMonthly" fx:id="btnMonthly" buttonType="RAISED" depthLevel="LEVEL1" graphicTextGap="14.0" layoutX="109.0" layoutY="208.0" prefHeight="58.0" prefWidth="282.0" rippleColor="WHITE" text="Monthly" textFill="WHITE">
+         <graphic>
+            <ImageView fitHeight="48.0" fitWidth="55.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/checklist.png" />
+               </image>
+            </ImageView>
+         </graphic>
+         <font>
+            <Font name="Open Sans Bold" size="22.0" />
+         </font>
+      </MFXButton>
+      <MFXButton id="btnWeekly" fx:id="btnWeekly" buttonType="RAISED" depthLevel="LEVEL1" graphicTextGap="12.0" layoutX="109.0" layoutY="134.0" prefHeight="58.0" prefWidth="282.0" rippleColor="WHITE" text="Weekly" textFill="WHITE">
+         <graphic>
+            <ImageView fitHeight="48.0" fitWidth="55.0" pickOnBounds="true" preserveRatio="true">
+               <image>
+                  <Image url="@../img/checklist.png" />
+               </image>
+            </ImageView>
+         </graphic>
+         <font>
+            <Font name="Open Sans Bold" size="22.0" />
+         </font>
+      </MFXButton>
+      <Hyperlink id="customRangeHL" fx:id="customRangeHL" layoutX="7.0" layoutY="248.0" text="Custom Range?">
+         <font>
+            <Font name="Open Sans Regular" size="12.0" />
+         </font>
+      </Hyperlink>
+   </children>
+</AnchorPane>

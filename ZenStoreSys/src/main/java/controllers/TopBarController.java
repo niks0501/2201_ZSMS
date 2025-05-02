@@ -33,6 +33,9 @@ public class TopBarController {
     private Button btnDashboard;
 
     @FXML
+    private Button btnReports;
+
+    @FXML
     private Button btnSales;
 
     private volatile boolean isLoading = false; // Track loading state
@@ -45,6 +48,7 @@ public class TopBarController {
         btnProduct.setOnAction(event -> loadProductsView());
         btnSales.setOnAction(event -> loadSalesView());
         btnCredits.setOnAction(event -> loadCreditsView());
+        btnReports.setOnAction(event -> loadReportsView());
 
         // Set up ProductLoadService handlers once and for all
         ProductLoadService productService = ProductLoadService.getInstance();
@@ -80,6 +84,66 @@ public class TopBarController {
     // Method to set the contentPane from DashboardController
     public void setContentPane(StackPane contentPane) {
         this.contentPane = contentPane;
+    }
+
+    @FXML
+    private void loadReportsView() {
+        // Prevent multiple concurrent loading operations
+        if (isLoading) {
+            return;
+        }
+
+        isLoading = true;
+        btnReports.setDisable(true);
+
+        // Show loading indicator
+        ProgressIndicator loadingIndicator = new ProgressIndicator();
+        loadingIndicator.setMaxSize(100, 100);
+
+        if (contentPane != null) {
+            contentPane.getChildren().clear();
+            contentPane.getChildren().add(loadingIndicator);
+
+            // Load FXML in background thread
+            Thread loaderThread = new Thread(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/company/zenstoresys/reports.fxml"));
+                    StackPane reportsView = loader.load();
+                    reportsView.getStylesheets().add(getClass().getResource("/css/reports.css").toExternalForm());
+                    reportsView.getStylesheets().add(getClass().getResource("/css/customDateRange.css").toExternalForm());
+
+                    // Update UI on JavaFX thread when ready
+                    Platform.runLater(() -> {
+                        contentPane.getChildren().clear();
+                        reportsView.setOpacity(0);
+                        contentPane.getChildren().add(reportsView);
+
+                        // Fade in the view immediately
+                        FadeTransition fadeIn = new FadeTransition(Duration.millis(200), reportsView);
+                        fadeIn.setFromValue(0);
+                        fadeIn.setToValue(1);
+                        fadeIn.setInterpolator(Interpolator.EASE_BOTH);
+                        fadeIn.setOnFinished(e -> {
+                            isLoading = false;
+                            btnReports.setDisable(false);
+                        });
+                        fadeIn.play();
+                    });
+                } catch (IOException e) {
+                    Platform.runLater(() -> {
+                        contentPane.getChildren().clear();
+                        Label errorLabel = new Label("Error loading content: " + e.getMessage());
+                        contentPane.getChildren().add(errorLabel);
+                        isLoading = false;
+                        btnReports.setDisable(false);
+                    });
+                    e.printStackTrace();
+                }
+            });
+
+            loaderThread.setDaemon(true);
+            loaderThread.start();
+        }
     }
 
     @FXML
