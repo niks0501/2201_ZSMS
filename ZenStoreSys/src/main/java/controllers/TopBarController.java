@@ -49,6 +49,7 @@ public class TopBarController {
         btnSales.setOnAction(event -> loadSalesView());
         btnCredits.setOnAction(event -> loadCreditsView());
         btnReports.setOnAction(event -> loadReportsView());
+        btnDashboard.setOnAction(event -> loadDashCompView());
 
         // Set up ProductLoadService handlers once and for all
         ProductLoadService productService = ProductLoadService.getInstance();
@@ -84,6 +85,65 @@ public class TopBarController {
     // Method to set the contentPane from DashboardController
     public void setContentPane(StackPane contentPane) {
         this.contentPane = contentPane;
+    }
+
+    @FXML
+    public void loadDashCompView() {
+        // Prevent multiple concurrent loading operations
+        if (isLoading) {
+            return;
+        }
+
+        isLoading = true;
+        btnDashboard.setDisable(true);
+
+        // Show loading indicator
+        ProgressIndicator loadingIndicator = new ProgressIndicator();
+        loadingIndicator.setMaxSize(100, 100);
+
+        if (contentPane != null) {
+            contentPane.getChildren().clear();
+            contentPane.getChildren().add(loadingIndicator);
+
+            // Load FXML in background thread
+            Thread loaderThread = new Thread(() -> {
+                try {
+                    FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/company/zenstoresys/dash_components.fxml"));
+                    StackPane dashCompView = loader.load();
+                    dashCompView.getStylesheets().add(getClass().getResource("/css/dash-components.css").toExternalForm());
+
+                    // Update UI on JavaFX thread when ready
+                    Platform.runLater(() -> {
+                        contentPane.getChildren().clear();
+                        dashCompView.setOpacity(0);
+                        contentPane.getChildren().add(dashCompView);
+
+                        // Fade in the view immediately
+                        FadeTransition fadeIn = new FadeTransition(Duration.millis(200), dashCompView);
+                        fadeIn.setFromValue(0);
+                        fadeIn.setToValue(1);
+                        fadeIn.setInterpolator(Interpolator.EASE_BOTH);
+                        fadeIn.setOnFinished(e -> {
+                            isLoading = false;
+                            btnDashboard.setDisable(false);
+                        });
+                        fadeIn.play();
+                    });
+                } catch (IOException e) {
+                    Platform.runLater(() -> {
+                        contentPane.getChildren().clear();
+                        Label errorLabel = new Label("Error loading content: " + e.getMessage());
+                        contentPane.getChildren().add(errorLabel);
+                        isLoading = false;
+                        btnDashboard.setDisable(false);
+                    });
+                    e.printStackTrace();
+                }
+            });
+
+            loaderThread.setDaemon(true);
+            loaderThread.start();
+        }
     }
 
     @FXML

@@ -71,6 +71,10 @@ public class DashboardController {
             // Clear and add the newly loaded topbar to navigationPane
             navigationPane.getChildren().clear();
             navigationPane.getChildren().add(topBar);
+
+            // Initialize with dashboard view automatically
+            topBarController.loadDashCompView();
+
         } catch (Exception e) {
             e.printStackTrace();
             System.err.println("Failed to load TopBarController: " + e.getMessage());

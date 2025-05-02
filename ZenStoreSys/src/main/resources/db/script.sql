@@ -47,6 +47,20 @@ create table credit_transactions
 create index customer_id
     on credit_transactions (customer_id);
 
+create trigger update_credit_balance_after_payment
+    after update
+    on credit_transactions
+    for each row
+BEGIN
+    -- Check if status was changed to 'PAID'
+    IF OLD.status = 'UNPAID' AND NEW.status = 'PAID' THEN
+        -- Subtract the transaction amount from customer's credit balance
+        UPDATE customers
+        SET credit_balance = credit_balance - NEW.amount
+        WHERE customer_id = NEW.customer_id;
+    END IF;
+END;
+
 create table products
 (
     product_id        int auto_increment
@@ -183,6 +197,16 @@ create index product_id
 
 create index sale_id
     on sales_items (sale_id);
+
+create view credit_transactions_view as
+select `ct`.`transaction_id`   AS `transaction_id`,
+       `c`.`name`              AS `customer_name`,
+       `ct`.`amount`           AS `amount`,
+       `ct`.`transaction_date` AS `transaction_date`,
+       `ct`.`due_date`         AS `due_date`,
+       `ct`.`status`           AS `status`
+from (`z_store_db`.`credit_transactions` `ct` join `z_store_db`.`customers` `c`
+      on (`ct`.`customer_id` = `c`.`customer_id`));
 
 create view lowstockproducts as
 select `p`.`product_id` AS `product_id`, `p`.`name` AS `name`, `p`.`stock` AS `stock`
