@@ -167,6 +167,9 @@ public class SalesController {
             return;
         }
 
+        // Update the total amount to ensure it reflects current quantities
+        updateTotalAmount();
+
         List<SalesItem> items = new ArrayList<>(salesTbl.getItems());
         BigDecimal totalAmount = new BigDecimal(totalAmountFld.getText());
 
@@ -217,11 +220,27 @@ public class SalesController {
                         insertionProgress.setVisible(false);
                     });
 
+                } catch (SQLException e) {
+                    conn.rollback();
+                    e.printStackTrace();
+
+                    // Check for the specific error message from the trigger
+                    if (e.getMessage().contains("Insufficient stock")) {
+                        Platform.runLater(() -> {
+                            showNotification("❌ Insufficient stock for one or more products");
+                            insertionProgress.setVisible(false);
+                        });
+                    } else {
+                        Platform.runLater(() -> {
+                            showNotification("❌ Error processing sale: " + e.getMessage());
+                            insertionProgress.setVisible(false);
+                        });
+                    }
                 } catch (Exception e) {
                     conn.rollback();
                     e.printStackTrace();
                     Platform.runLater(() -> {
-                        showNotification("❌ Error processing sale: " + e.getMessage());
+                        showNotification("❌ Error: " + e.getMessage());
                         insertionProgress.setVisible(false);
                     });
                 }
@@ -1367,19 +1386,20 @@ public class SalesController {
             // Commit on Enter
             textField.setOnAction(event -> {
                 try {
-                    int inputQty = Integer.parseInt(textField.getText());
-                    SalesItem item = getTableRow().getItem();
-                    if (item != null) {
-                        int currentQty = item.getQuantity();
-                        int newQty;
+                    int value = Integer.parseInt(textField.getText());
+                    if (value > 0) {
+                        SalesItem item = getTableRow().getItem();
                         if (isAdding) {
-                            newQty = currentQty + inputQty;
+                            item.setQuantity(value);
                         } else {
-                            newQty = Math.max(1, currentQty - inputQty); // Ensure quantity >= 1
+                            // For deducting, ensure we don't go below 1
+                            int newQty = Math.max(1, item.getQuantity() - value);
+                            item.setQuantity(newQty);
+
                         }
-                        item.setQuantity(newQty);
-                        commitEdit(newQty);
+                        commitEdit(item.getQuantity());
                     }
+                    cancelEdit();
                 } catch (NumberFormatException e) {
                     cancelEdit();
                 }
@@ -1387,8 +1407,24 @@ public class SalesController {
 
             // Cancel on focus loss
             textField.focusedProperty().addListener((obs, wasFocused, isFocused) -> {
-                if (!isFocused && isEditing()) {
-                    cancelEdit();
+                if (!isFocused) {
+                    try {
+                        int value = Integer.parseInt(textField.getText());
+                        if (value > 0) {
+                            SalesItem item = getTableRow().getItem();
+                            if (isAdding) {
+                                item.setQuantity(value);
+                            } else {
+                                // For deducting, ensure we don't go below 1
+                                int newQty = Math.max(1, item.getQuantity() - value);
+                                item.setQuantity(newQty);
+                            }
+                            commitEdit(item.getQuantity());
+                        }
+                        cancelEdit();
+                    } catch (NumberFormatException e) {
+                        cancelEdit();
+                    }
                 }
             });
 
@@ -1459,6 +1495,8 @@ public class SalesController {
             super.commitEdit(newValue);
             setText(String.valueOf(newValue));
             setGraphic(null);
+
+            updateTotalAmount();
         }
     }
 
