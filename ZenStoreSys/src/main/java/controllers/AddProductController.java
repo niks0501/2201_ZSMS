@@ -652,7 +652,7 @@ public class AddProductController {
 
     private void clearFields() {
         nameFld.clear();
-        categoryCb.setValue(null);
+        categoryCb.selectFirst();
         costPriceFld.clear();
         markupFld.clear();
         sellingPriceFld.clear();

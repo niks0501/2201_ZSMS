@@ -203,6 +203,7 @@ public class Product {
                     if (stocksColumn != null) {
                         // Create an in-place text field
                         startInPlaceEdit(tableView, rowIndex, stocksColumn);
+
                     }
                 }
             }
@@ -986,7 +987,7 @@ public class Product {
                     setText(null);
                     textField.setText("");
                     setGraphic(textField);
-                    textField.requestFocus();
+                    // Request focus will now be handled by Platform.runLater
                 } else {
                     setText(item.toString());
                     setGraphic(null);
@@ -1039,6 +1040,30 @@ public class Product {
 
         // Refresh the table to show the text field
         tableView.refresh();
+
+        // Use Platform.runLater to ensure focus request happens after UI update
+        Platform.runLater(() -> {
+            Node cell = getNodeFromRow(tableView, rowIndex, stocksColumn);
+            if (cell instanceof TableCell) {
+                Node graphic = ((TableCell<?, ?>) cell).getGraphic();
+                if (graphic instanceof TextField) {
+                    graphic.requestFocus();
+                }
+            }
+        });
+    }
+
+    // Helper method to get the node for a specific row and column
+    private Node getNodeFromRow(TableView<?> tableView, int row, TableColumn<?, ?> column) {
+        for (Node node : tableView.lookupAll(".table-cell")) {
+            if (node instanceof TableCell) {
+                TableCell<?, ?> cell = (TableCell<?, ?>) node;
+                if (cell.getTableColumn() == column && cell.getIndex() == row) {
+                    return cell;
+                }
+            }
+        }
+        return null;
     }
 
 

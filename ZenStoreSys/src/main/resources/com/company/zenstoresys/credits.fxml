@@ -29,7 +29,7 @@
                         <Font name="Inter 18pt ExtraBold" size="35.0" />
                      </font>
                   </Label>
-                  <Label layoutX="25.0" layoutY="46.0" prefHeight="25.0" prefWidth="174.0" text="Csutomer Credits">
+                  <Label layoutX="25.0" layoutY="46.0" prefHeight="25.0" prefWidth="174.0" text="Customer Credits">
                      <font>
                         <Font name="Source Sans 3 SemiBold" size="16.0" />
                      </font>
