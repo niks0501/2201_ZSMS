@@ -59,7 +59,7 @@
                   </ImageView>
                   <ImageView fitHeight="25.0" fitWidth="23.0" layoutX="845.0" layoutY="72.0" pickOnBounds="true" preserveRatio="true">
                      <image>
-                        <Image url="@../../../img/filter%20(1).png" />
+                        <Image url="@../../../img/filter(1).png" />
                      </image>
                   </ImageView>
                   <MFXTextField id="searchFld" fx:id="searchFld" floatMode="BORDER" floatingText="Search" graphicTextGap="5.0" layoutX="356.0" layoutY="67.0" minHeight="0.0" minWidth="0.0" prefHeight="32.0" prefWidth="328.0">

@@ -1,0 +1,71 @@
+.dialog-root {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-radius: 10;
+    -fx-border-color: #81B29A;
+    -fx-border-width: 2;
+    -fx-padding: 20;
+    -fx-alignment: center;
+    -fx-spacing: 15;
+}
+
+.mfx-date-picker:focus-within .icon {
+    -mfx-color: #81B29A;
+}
+
+.mfx-date-picker .date-picker-popup .content {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+    -fx-border-color: #81B29A;
+    -fx-border-radius: 10;
+    -fx-padding: 15;
+    -fx-min-height: 300;
+}
+
+.mfx-date-picker .date-picker-popup .months-combo:focus-within,
+.mfx-date-picker .date-picker-popup .years-combo:focus-within {
+    -fx-background-color: #f8f7fa;
+    -fx-text-fill: #81B29A;
+}
+
+.mfx-date-picker .date-picker-popup .months-combo .virtual-flow .mfx-combo-box-cell:selected .label,
+.mfx-date-picker .date-picker-popup .years-combo .virtual-flow .mfx-combo-box-cell:selected .label {
+    -fx-text-fill: -mfx-charcoal;
+}
+
+.mfx-date-picker .date-picker-popup .months-combo .virtual-flow .mfx-combo-box-cell:hover,
+.mfx-date-picker .date-picker-popup .years-combo .virtual-flow .mfx-combo-box-cell:hover {
+    -fx-background-color: #f8f7fa;
+}
+
+.mfx-date-picker .date-picker-popup .months-combo .virtual-flow .mfx-combo-box-cell:selected,
+.mfx-date-picker .date-picker-popup .years-combo .virtual-flow .mfx-combo-box-cell:selected {
+    -fx-background-color: #81B29A;
+}
+
+.mfx-date-picker .date-picker-popup .months-combo .virtual-flow .mfx-combo-box-cell:selected .label,
+.mfx-date-picker .date-picker-popup .years-combo .virtual-flow .mfx-combo-box-cell:selected .label {
+    -fx-text-fill: white;
+}
+
+.mfx-date-picker .date-picker-popup .week-day {
+    -fx-font-family: "Open Sans SemiBold";
+    -fx-text-fill: -mfx-text-he;
+    -fx-padding: 0 0 5 0;
+}
+
+.mfx-date-cell:current {
+    -fx-text-fill: green;
+    -fx-background-color: #F7F6F9;
+    -fx-font-family: "Open Sans SemiBold";
+}
+
+.mfx-date-cell:selected {
+    -fx-text-fill: white;
+    -fx-background-color: #81B29A;
+    -fx-font-family: "Open Sans SemiBold";
+}
+
+.mfx-date-cell:extra {
+    -fx-text-fill: #a9a9a9;
+}

@@ -156,7 +156,7 @@ public class LoginController {
 
                 // Add fade-in transition
                 root.setOpacity(0);
-                FadeTransition fadeIn = new FadeTransition(Duration.millis(500), root);
+                FadeTransition fadeIn = new FadeTransition(Duration.millis(200), root);
                 fadeIn.setFromValue(0);
                 fadeIn.setToValue(1);
                 fadeIn.setCycleCount(1);

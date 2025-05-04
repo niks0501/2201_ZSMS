@@ -115,6 +115,7 @@
 
 #btnPic, #btnImport, #btnAddProduct {
     -fx-border-color: green; /* border color */
+    -fx-border-width: 2px;
 }
 
 

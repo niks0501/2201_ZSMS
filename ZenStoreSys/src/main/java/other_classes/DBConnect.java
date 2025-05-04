@@ -13,11 +13,7 @@ public class DBConnect {
 
     public static Connection getConnection() throws SQLException {
         Connection connection = DriverManager.getConnection(URL, USER, PASSWORD);
-        if (connection != null) {
-            System.out.println("Connection successful!");
-        } else {
-            System.out.println("Failed to make connection!");
-        }
+
         return connection;
     }
 

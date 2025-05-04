@@ -1,0 +1,33 @@
+.check-box .box {
+    -fx-background-color: white;
+    -fx-border-color: #81B29A;
+    -fx-border-width: 2px;
+    -fx-border-radius: 3px;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: white;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #81B29A;
+}
+
+.table-cell > .check-box {
+    -fx-alignment: CENTER;
+}
+
+.mfx-checkbox {
+    -mfx-main: #81B29A;
+    -mfx-secondary: white;
+}
+
+.mfx-checkbox .box {
+    -fx-background-color: white;
+    -fx-border-color: #81B29A;
+    -fx-border-width: 2px;
+}
+
+.mfx-checkbox:selected .box {
+    -fx-background-color: #81B29A;
+}

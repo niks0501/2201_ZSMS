@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.palexdev.materialfx.controls.MFXButton?>
+<?import io.github.palexdev.materialfx.controls.MFXProgressBar?>
+<?import io.github.palexdev.materialfx.controls.MFXProgressSpinner?>
+<?import io.github.palexdev.materialfx.controls.MFXRadioButton?>
+<?import io.github.palexdev.materialfx.controls.MFXTextField?>
+<?import io.github.palexdev.materialfx.controls.MFXToggleButton?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.shape.Line?>
+<?import javafx.scene.text.Font?>
+
+<StackPane fx:id="saleMainFrame" prefHeight="646.0" prefWidth="1080.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.SalesController">
+   <children>
+      <AnchorPane prefHeight="646.0" prefWidth="1080.0" style="-fx-background-color: #F5EBE0;">
+         <children>
+            <Pane fx:id="salesContentPane" layoutX="25.0" layoutY="32.0" prefHeight="583.0" prefWidth="1030.0" style="-fx-background-color: white;">
+               <children>
+                  <TableView id="salesTbl" fx:id="salesTbl" layoutX="14.0" layoutY="82.0" prefHeight="425.0" prefWidth="632.0">
+                    <columns>
+                      <TableColumn fx:id="productIdColumn" prefWidth="54.0" text="ID" />
+                      <TableColumn fx:id="productNameColumn" prefWidth="196.0" text="Name" />
+                        <TableColumn fx:id="productQtyColumn" prefWidth="70.0" text="Qty." />
+                        <TableColumn fx:id="subtotalColumn" prefWidth="89.0" text="Subtotal" />
+                        <TableColumn fx:id="discountColumn" prefWidth="105.0" text="Discount %" />
+                        <TableColumn fx:id="finalPriceColumn" prefWidth="116.0" text="Final Price" />
+                    </columns>
+                  </TableView>
+                  <Label layoutX="35.0" layoutY="43.0" prefHeight="25.0" prefWidth="174.0" text="Sales">
+                     <font>
+                        <Font name="Source Sans 3 SemiBold" size="16.0" />
+                     </font>
+                  </Label>
+                  <Label layoutX="35.0" layoutY="11.0" prefHeight="44.0" prefWidth="203.0" text="ZSariSmart">
+                     <font>
+                        <Font name="Inter 18pt ExtraBold" size="35.0" />
+                     </font>
+                  </Label>
+                  <Line endX="-100.0" endY="48.0" layoutX="124.0" layoutY="16.0" startX="-100.0" stroke="#81b29a" strokeWidth="10.0" />
+                  <Label alignment="CENTER" layoutX="214.0" layoutY="518.0" prefHeight="44.0" prefWidth="233.0" text="Cart Items">
+                     <font>
+                        <Font name="Inter 18pt ExtraBold" size="35.0" />
+                     </font>
+                     <graphic>
+                        <ImageView fitHeight="37.0" fitWidth="41.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../img/add-to-cart.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Label>
+                  <ImageView fitHeight="44.0" fitWidth="32.0" layoutX="675.0" layoutY="63.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../img/google.png" />
+                     </image>
+                  </ImageView>
+                  <MFXTextField id="searchFld" fx:id="searchFld" floatMode="BORDER" floatingText="Search" graphicTextGap="5.0" layoutX="707.0" layoutY="66.0" minHeight="0.0" minWidth="0.0" prefHeight="32.0" prefWidth="263.0">
+                     <font>
+                        <Font name="Open Sans Regular" size="14.0" />
+                     </font>
+                  </MFXTextField>
+                  <MFXProgressSpinner fx:id="insertionProgress" layoutX="762.0" layoutY="514.0" prefHeight="58.0" prefWidth="69.0" progress="0.0" startingAngle="100.0" />
+                  <MFXButton id="btnCheckout" fx:id="btnCheckout" buttonType="RAISED" depthLevel="LEVEL1" layoutX="831.0" layoutY="511.0" prefHeight="64.0" prefWidth="184.0" rippleColor="WHITE" text="Checkout" textFill="WHITE">
+                     <graphic>
+                        <ImageView fitHeight="48.0" fitWidth="55.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../img/checklist.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <font>
+                        <Font name="Open Sans Bold" size="16.0" />
+                     </font>
+                  </MFXButton>
+                  <MFXButton id="btnDiscounts" fx:id="btnDiscounts" buttonType="RAISED" depthLevel="LEVEL1" layoutX="879.0" layoutY="458.0" prefHeight="41.0" prefWidth="137.0" rippleColor="WHITE" text="Discounts" textFill="WHITE">
+                     <graphic>
+                        <ImageView fitHeight="37.0" fitWidth="31.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../img/coupon.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                     <font>
+                        <Font name="Open Sans Bold" size="14.0" />
+                     </font>
+                  </MFXButton>
+                  <MFXProgressBar id="discountedProdProgress" fx:id="discountedProdProgress" layoutX="672.0" layoutY="376.0" prefHeight="14.0" prefWidth="332.0" progress="0.0" />
+                  <Label fx:id="discountPercentage" alignment="CENTER" layoutX="692.0" layoutY="390.0" prefHeight="25.0" prefWidth="294.0" text="\%">
+                     <font>
+                        <Font name="Source Sans 3 SemiBold" size="14.0" />
+                     </font>
+                  </Label>
+                  <ListView id="productsListView" fx:id="productsListView" layoutX="659.0" layoutY="114.0" prefHeight="253.0" prefWidth="357.0" />
+                  <Pane fx:id="cameraFrame" layoutX="658.0" layoutY="114.0" prefHeight="253.0" prefWidth="357.0" visible="false">
+                     <children>
+                        <ImageView fx:id="pictureDialog" fitHeight="234.0" fitWidth="325.0" layoutX="18.0" layoutY="10.0" pickOnBounds="true" preserveRatio="true" />
+                     </children>
+                  </Pane>
+                  <MFXRadioButton id="applyDiscBtn" fx:id="applyDiscBtn" layoutX="515.0" layoutY="59.0" text="Apply Discounts">
+                     <font>
+                        <Font name="Open Sans Bold" size="14.0" />
+                     </font>
+                  </MFXRadioButton>
+                  <MFXToggleButton id="toggleMode" fx:id="toggleMode" layoutX="912.0" layoutY="415.0" text="Mode">
+                     <font>
+                        <Font name="Open Sans Bold" size="14.0" />
+                     </font>
+                  </MFXToggleButton>
+                  <MFXTextField id="totalAmountFld" fx:id="totalAmountFld" allowEdit="false" floatMode="ABOVE" floatingText="Total Amount:" layoutX="661.0" layoutY="458.0" minHeight="0.0" minWidth="0.0" prefHeight="47.0" prefWidth="209.0">
+                     <font>
+                        <Font name="Open Sans Bold" size="16.0" />
+                     </font>
+                  </MFXTextField>
+                  <MFXProgressSpinner fx:id="cameraLoadingSpinner" layoutX="806.0" layoutY="216.0" progress="0.0" visible="false" />
+                  <MFXButton fx:id="btnClearTable" buttonType="RAISED" contentDisplay="GRAPHIC_ONLY" layoutX="457.0" layoutY="52.0" prefHeight="32.0" prefWidth="50.0" style="-fx-background-color: transparent;">
+                     <graphic>
+                        <ImageView fitHeight="21.0" fitWidth="22.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../img/clean.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </MFXButton>
+               </children>
+            </Pane>
+         </children>
+      </AnchorPane>
+   </children>
+</StackPane>

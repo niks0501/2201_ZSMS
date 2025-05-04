@@ -9,10 +9,14 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -54,16 +58,80 @@ public class CamDialogController {
 
     @FXML
     private void initialize() {
-        //Set up exit button
+        // Setup UI controls first
         btnExit.setOnAction(event -> handleExit());
-
-        //Set up minimize button
         btnMinimize.setOnAction(event -> handleMinimize());
-
-        // Set up picture button
         btnPicture.setOnAction(event -> takeSnapshot());
+        setupWindowDrag();
 
-        // Add these lines to make the barPane draggable
+        // Show loading indicator
+        ProgressIndicator loadingIndicator = new ProgressIndicator();
+        loadingIndicator.setStyle("-fx-progress-color: #81B29A;");
+        loadingIndicator.setPrefSize(64, 64);
+
+        // Use JavaFX Label instead of AWT Label
+        javafx.scene.control.Label loadingLabel = new javafx.scene.control.Label("Initializing camera...");
+        loadingLabel.setStyle("-fx-text-fill: white; -fx-font-size: 14px;");
+
+        VBox loadingBox = new VBox(10, loadingIndicator, loadingLabel);
+        loadingBox.setAlignment(Pos.CENTER);
+        loadingBox.setStyle("-fx-background-color: transparent;");
+        camPane.getChildren().add(loadingBox);
+
+        // Initialize webcam in background thread
+        new Thread(() -> {
+            try {
+                // Initialize hardware
+                webcam = Webcam.getDefault();
+                if (webcam != null) {
+                    webcam.setViewSize(new Dimension(640, 480));
+                    webcam.open(true); // non-blocking open
+
+                    // Create UI components on JavaFX thread
+                    Platform.runLater(() -> {
+                        try {
+                            // Create ImageView for camera feed
+                            webcamImageView = new ImageView();
+                            webcamImageView.setPreserveRatio(true);
+
+                            // Remove loading indicator
+                            camPane.getChildren().clear();
+                            camPane.getChildren().add(webcamImageView);
+
+                            // Setup styling and positioning
+                            camPane.setStyle("-fx-background-color: black;");
+                            AnchorPane.setTopAnchor(webcamImageView, 0.0);
+                            AnchorPane.setBottomAnchor(webcamImageView, 0.0);
+                            AnchorPane.setLeftAnchor(webcamImageView, 0.0);
+                            AnchorPane.setRightAnchor(webcamImageView, 0.0);
+
+                            webcamImageView.fitWidthProperty().bind(camPane.widthProperty());
+                            webcamImageView.fitHeightProperty().bind(camPane.heightProperty());
+
+                            // Start capture thread
+                            startCaptureThread();
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            showError("Error setting up camera display: " + e.getMessage());
+                        }
+                    });
+                } else {
+                    Platform.runLater(() -> {
+                        showError("No webcam detected");
+                        handleExit();
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    showError("Failed to initialize webcam: " + e.getMessage());
+                    handleExit();
+                });
+            }
+        }).start();
+    }
+
+    private void setupWindowDrag() {
         barPane.setOnMousePressed(event -> {
             xOffset = event.getSceneX();
             yOffset = event.getSceneY();
@@ -74,10 +142,43 @@ public class CamDialogController {
             stage.setX(event.getScreenX() - xOffset);
             stage.setY(event.getScreenY() - yOffset);
         });
-
-        // Initialize webcam after UI is visible
-        Platform.runLater(this::initWebcam);
     }
+
+    private void startCaptureThread() {
+        webcamActive.set(true);
+        captureThread = new Thread(() -> {
+            BufferedImage currentFrame;
+
+            while (webcamActive.get() && !Thread.interrupted()) {
+                try {
+                    if (webcam != null && webcam.isOpen()) {
+                        currentFrame = webcam.getImage();
+
+                        if (currentFrame != null) {
+                            final Image fxImage = SwingFXUtils.toFXImage(currentFrame, null);
+                            Platform.runLater(() -> {
+                                if (webcamImageView != null) {
+                                    webcamImageView.setImage(fxImage);
+                                }
+                            });
+                        }
+
+                        // Lower frame rate to reduce CPU usage
+                        Thread.sleep(100);  // 10 fps is usually sufficient for preview
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    break;
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+        captureThread.setDaemon(true);
+        captureThread.start();
+    }
+
 
     public void setParentController(AddProductController controller) {
         this.parentController = controller;
@@ -168,24 +269,47 @@ public class CamDialogController {
 
     private void takeSnapshot() {
         if (webcam != null && webcam.isOpen()) {
-            try {
-                BufferedImage bufferedImage = webcam.getImage();
+            // Use JavaFX Rectangle instead of AWT Rectangle
+            javafx.scene.shape.Rectangle flash = new javafx.scene.shape.Rectangle(
+                    camPane.getWidth(), camPane.getHeight());
+            flash.setFill(javafx.scene.paint.Color.WHITE);
+            flash.setOpacity(0.7);
 
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                ImageIO.write(bufferedImage, "PNG", outputStream);
-                ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
-                Image fxImage = new Image(inputStream);
+            Platform.runLater(() -> {
+                camPane.getChildren().add(flash);
 
-                if (parentController != null) {
-                    parentController.setProductImage(fxImage);
-                }
+                // Flash animation
+                FadeTransition fadeOut = new FadeTransition(Duration.millis(300), flash);
+                fadeOut.setFromValue(0.7);
+                fadeOut.setToValue(0.0);
+                fadeOut.setOnFinished(e -> {
+                    camPane.getChildren().remove(flash);
 
-                handleExit();
+                    // Process image in background thread
+                    new Thread(() -> {
+                        try {
+                            BufferedImage bufferedImage = webcam.getImage();
 
-            } catch (IOException e) {
-                e.printStackTrace();
-                showError("Failed to capture image: " + e.getMessage());
-            }
+                            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                            ImageIO.write(bufferedImage, "PNG", outputStream);
+                            ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+                            Image fxImage = new Image(inputStream);
+
+                            Platform.runLater(() -> {
+                                if (parentController != null) {
+                                    parentController.setProductImage(fxImage);
+                                }
+                                handleExit();
+                            });
+                        } catch (IOException ex) {
+                            ex.printStackTrace();
+                            Platform.runLater(() -> showError("Failed to capture image: " + ex.getMessage()));
+                        }
+                    }).start();
+                });
+
+                fadeOut.play();
+            });
         }
     }
 

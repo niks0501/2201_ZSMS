@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import io.github.palexdev.materialfx.controls.MFXButton?>
+<?import io.github.palexdev.materialfx.controls.MFXComboBox?>
+<?import io.github.palexdev.materialfx.controls.MFXRadioButton?>
+<?import io.github.palexdev.materialfx.controls.MFXTextField?>
+<?import java.lang.String?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Pagination?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.shape.Line?>
+<?import javafx.scene.text.Font?>
+
+<StackPane fx:id="creditMainFrame" prefHeight="646.0" prefWidth="1080.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.CreditsController">
+   <children>
+      <AnchorPane prefHeight="646.0" prefWidth="1080.0" style="-fx-background-color: #F5EBE0;">
+         <children>
+            <Pane id="creditContentPane" fx:id="creditContentPane" layoutX="21.0" layoutY="32.0" prefHeight="583.0" prefWidth="1039.0" style="-fx-background-color: white;">
+               <children>
+                  <Line endX="-100.0" endY="48.0" layoutX="114.0" layoutY="19.0" startX="-100.0" stroke="#81b29a" strokeWidth="10.0" />
+                  <Label layoutX="25.0" layoutY="14.0" prefHeight="44.0" prefWidth="203.0" text="ZSariSmart">
+                     <font>
+                        <Font name="Inter 18pt ExtraBold" size="35.0" />
+                     </font>
+                  </Label>
+                  <Label layoutX="25.0" layoutY="46.0" prefHeight="25.0" prefWidth="174.0" text="Customer Credits">
+                     <font>
+                        <Font name="Source Sans 3 SemiBold" size="16.0" />
+                     </font>
+                  </Label>
+                  <TableView fx:id="creditTbl" layoutX="25.0" layoutY="106.0" prefHeight="420.0" prefWidth="991.0">
+                    <columns>
+                      <TableColumn fx:id="transacIdColumn" prefWidth="87.0" text="Transac ID" />
+                      <TableColumn fx:id="customerNameColumn" prefWidth="235.0" text="Name" />
+                        <TableColumn fx:id="amountColumn" prefWidth="142.0" text="Amount" />
+                        <TableColumn fx:id="transacDateColumn" prefWidth="196.0" text="Transaction Date" />
+                        <TableColumn fx:id="dueDateColumn" prefWidth="191.0" text="Due Date" />
+                        <TableColumn fx:id="creditStatisColumn" prefWidth="139.0" text="Status" />
+                    </columns>
+                  </TableView>
+                  <Pagination fx:id="creditTblPage" layoutX="337.0" layoutY="526.0" pageCount="10" prefHeight="44.0" prefWidth="365.0" />
+                  <ImageView fitHeight="36.0" fitWidth="36.0" layoutX="319.0" layoutY="63.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../img/google.png" />
+                     </image>
+                  </ImageView>
+                  <MFXTextField id="creditSearchFld" fx:id="creditSearchFld" floatMode="BORDER" floatingText="Search" graphicTextGap="5.0" layoutX="356.0" layoutY="65.0" minHeight="0.0" minWidth="0.0" prefHeight="32.0" prefWidth="328.0">
+                     <font>
+                        <Font name="Open Sans Regular" size="14.0" />
+                     </font>
+                  </MFXTextField>
+                  <ImageView fitHeight="25.0" fitWidth="23.0" layoutX="840.0" layoutY="70.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@../../../img/filter(1).png" />
+                     </image>
+                  </ImageView>
+                  <MFXComboBox id="sortCreditTbl" fx:id="sortCreditTbl" floatMode="BORDER" floatingText="Sort" layoutX="863.0" layoutY="67.0" minHeight="0.0" minWidth="0.0" prefHeight="29.0" prefWidth="153.0">
+                     <styleClass>
+                        <String fx:value="mfx-combo-box" />
+                        <String fx:value="mfx-combo-box-cell" />
+                     </styleClass>
+                  </MFXComboBox>
+                  <MFXRadioButton fx:id="rbUnpaid" layoutX="25.0" layoutY="84.0" text="UNPAID" />
+                  <MFXRadioButton fx:id="rbNearDue" layoutX="112.0" layoutY="84.0" text="NEAR DUE" />
+                  <MFXRadioButton id="rbPaid" fx:id="rbPaid" layoutX="209.0" layoutY="84.0" text="PAID" />
+                  <MFXButton fx:id="btnSendNotif" contentDisplay="GRAPHIC_ONLY" layoutX="779.0" layoutY="65.0" visible="false">
+                     <graphic>
+                        <ImageView fitHeight="24.0" fitWidth="32.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@../../../img/notification.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </MFXButton>
+               </children>
+            </Pane>
+         </children>
+      </AnchorPane>
+   </children>
+</StackPane>
